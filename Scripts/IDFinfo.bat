@@ -2,34 +2,33 @@
 REM ******************************************
 REM * SIF-basis v2.1.0 (Sweco)               *
 REM *                                        *
-REM * ASC2IDF.bat                            *
+REM * IDFinfo.bat                            *
 REM * DESCRIPTION                            *
-REM *   converts ASC-files to IDF            *
+REM *   Checks content of IDF-file(s)        *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
 REM * VERSION: 2.0.0                         *
 REM * MODIFICATIONS                          *
-REM *   2020-02-12 Initial version           *
+REM *   2022-01-28 Initial version           *
 REM ******************************************
 CALL :Initialization
-IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
 
 REM ********************
 REM * Script variables *
 REM ********************
-REM SOURCEPATH: Path to ASC-files
-REM ASCFILTER:  Filter for ASC-files, e.g. *.ASC
-REM RESULTPATH: Path to subdirectory where scriptresults are stored
-SET SOURCEPATH=%ROOTPATH%\..\..\Gegevens\Basisdata
-SET ASCFILTER=*.ASC
-SET RESULTPATH=tmp
+REM IDFPATH:       Path to input IDF-files
+REM IDFFILTER:     Filter, with use of wildcards, for filenames of input IDF-files, or a single filename
+REM IDFVALUE:      Value in IDF-file for check for. Number of cells will be reported. Use "NoData" (without quotes) to check for NoData-values. Leave empty to count number of non-NoData-values.
+REM ISERRORRAISED: Specify (with value 1) if an error should be raised when the resulting number of cells is larger than 0 for any of the IDF-files
+SET IDFPATH=input
+SET IDFFILTER=*.IDF
+SET IDFVALUE=NoData
+SET ISERRORRAISED=1
 
 REM *********************
 REM * Derived variables *
 REM *********************
 SET SCRIPTNAME=%~n0
 SET LOGFILE="%SCRIPTNAME%.log"
-SET INIFILE="%SCRIPTNAME%.INI"
-SET IMODEXE=%IMODEXE%
 
 REM *******************
 REM * Script commands *
@@ -38,45 +37,31 @@ SETLOCAL EnableDelayedExpansion
 
 TITLE SIF-basis: %SCRIPTNAME%
 
-REM Check that the specified paths exist
-IF NOT EXIST "%SOURCEPATH%" (
-   ECHO The specified SOURCEPATH does not exist: %SOURCEPATH%
-   ECHO The specified SOURCEPATH does not exist: %SOURCEPATH% > %LOGFILE%
-   GOTO error
-)
-
-REM Create empty result directory
 IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
-IF ERRORLEVEL 1 GOTO error
 
-REM Log settings
 SET MSG=Starting %SCRIPTNAME% ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
-ECHO   SOURCEPATH=%SOURCEPATH%
-ECHO   SOURCEPATH=%SOURCEPATH% >> %LOGFILE%
-ECHO   ASCFILTER=%ASCFILTER%
-ECHO   ASCFILTER=%ASCFILTER% >> %LOGFILE%
 
-SET MSG=Starting ASC-file conversion...
-ECHO %MSG%
-ECHO %MSG% >> %LOGFILE%
+FOR %%G IN ("%IDFPATH%\%IDFFILTER%") DO (
+  SET IDFFILENAME=%%~nxG
+  ECHO   checking !IDFFILENAME! ...
+  ECHO   checking !IDFFILENAME! ... >> %LOGFILE%
 
-ECHO FUNCTION=CREATEIDF > %INIFILE%
-ECHO SOURCEDIR="%SOURCEPATH%\%ASCFILTER%" >> %INIFILE%
-ECHO "%IMODEXE%" %INIFILE% >> %LOGFILE%
-"%IMODEXE%" %INIFILE% >> %LOGFILE%
-IF ERRORLEVEL 1 GOTO error
-IF EXIST %INIFILE% DEL %INIFILE%
-IF EXIST "tmp\*_dir_imod.bat" DEL /F /Q "tmp\*_dir_imod.bat"
-IF EXIST "tmp\*_dir_imod.txt" DEL /F /Q "tmp\*_dir_imod.txt"
-REM IF EXIST TMP RMDIR TMP >NUL 2>&1
-
-IF NOT "%RESULTPATH%" == "%SOURCEPATH%" (
-  ECHO MOVE /Y "%SOURCEPATH%\%ASCFILTER:.ASC=.IDF%" "%RESULTPATH%" >> %LOGFILE%
-  MOVE /Y "%SOURCEPATH%\%ASCFILTER:.ASC=.IDF%" "%RESULTPATH%" >> %LOGFILE% 2>&1
+  REM Retrieve number of cells with specified value in IDF-file
+  ECHO CALL "%TOOLSPATH%\SIF.iMOD.runsub" :IDFINFO "%%G" 4 %IDFVALUE% >> %LOGFILE%
+  CALL "%TOOLSPATH%\SIF.iMOD.runsub" :IDFINFO "%%G" 4 %IDFVALUE%
   IF ERRORLEVEL 1 GOTO error
+ 
+  ECHO   number of cells with value %IDFVALUE%: !IDFINFO!
+  ECHO   number of cells with value %IDFVALUE%: !IDFINFO! >> %LOGFILE%
+  IF "%ISERRORRAISED%"=="1" (
+    IF NOT "!IDFINFO!"=="0" GOTO error
+  )
 )
+
+ECHO: 
+ECHO: >> %LOGFILE%
 
 :success
 SET MSG=Script finished, see "%~n0.log"

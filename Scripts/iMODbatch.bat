@@ -1,12 +1,12 @@
 @ECHO OFF
 REM *******************************************
-REM * SIF-basis (Sweco)                       *
-REM * Version 1.1.0 December 2020             *
+REM * SIF-basis v2.1.0 (Sweco)                *
 REM *                                         *
 REM * iMOD-batchfunction.bat                  *
-REM * AUTHOR(S): Koen van der Hauw (Sweco)    *
-REM * DESCRIPTION                             * 
+REM * DESCRIPTION                             *
 REM *   Runs iMOD with specified INI-file     *
+REM * AUTHOR(S): Koen van der Hauw (Sweco)    *
+REM * VERSION: 2.0.0                          *
 REM * MODIFICATIONS                           *
 REM *   2019-02-08 Initial version            *
 REM *******************************************

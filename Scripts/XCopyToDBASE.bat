@@ -1,13 +1,13 @@
 @ECHO OFF
 REM *********************************************
-REM * SIF-basis (Sweco)                         *
-REM * Version 1.1.0 December 2020               *
+REM * SIF-basis v2.1.0 (Sweco)                  *
 REM *                                           *
 REM * XCopyToDBASE.bat                          *
 REM * DESCRIPTION                               *
 REM *   Copies complete structures of files and *
 REM *   subdirs to specified DBASE modelpath    *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)      *
+REM * VERSION: 2.0.0                            *
 REM * MODIFICATIONS                             *
 REM *   2018-09-12 Initial version              *
 REM *********************************************
@@ -18,7 +18,7 @@ REM * Script variables *
 REM ********************
 REM SOURCEPATH:      Name of subdirectory where (script)results were stored that should be copied to DBASE-subdirectory
 REM TARGETPATH:      Targetpath excluding "MODELREF1[\MODELREF2[\MODELSUBDIR]]", or leave empty to use %DBASEPATH% as target
-REM MODELNAME:       Full model version string as MODELREF1[_MODELREF2[_MODELREF3]]), which is added to TARGETPATH, or leave empty place SOURCEPATH directly under TARGETPATH
+REM MODELNAME:       Full model version string as MODELREF1[_MODELREF2[_MODELREF3]]), which is added to TARGETPATH, or leave empty to place SOURCEPATH directly under TARGETPATH
 REM MODELSUBDIR:     Specify subdirectory name where files should be copied to (may be left empty). This could be the package directory name if PACKAGEDIRS is used to specify one or more other sublevels.
 REM ISTARGETCLEANED: Use 1 if complete targetpath DBASE\MODELREF1[\MODELREF2[\MODELSUBDIR]] should be deleted before copy (1=delete contents including subdirectories, 0=do not delete contents)
 REM ISMOVED:         Use 1 if files should be moved instead of copied (1=move, empty/non-1=copy). When moving ensure contents to do not exist in targetpath
@@ -27,7 +27,7 @@ SET TARGETPATH=
 SET MODELNAME=ORG-test
 SET MODELSUBDIR=
 SET ISMOVED=1
-SET ISTARGETCLEANED=1
+SET ISTARGETCLEANED=0
 
 REM *********************
 REM * Derived variables *
@@ -63,7 +63,7 @@ IF NOT EXIST "%SOURCEPATH%" (
 REM Retrieve full targetpath
 IF DEFINED MODELNAME (
   SET FULLMODELNAME=%MODELNAME:_=\%
-  IF DEFINED MODELSUBDIR SET FULLMODELNAME=%FULLMODELNAME%\%MODELSUBDIR%
+  IF DEFINED MODELSUBDIR SET FULLMODELNAME=!FULLMODELNAME!\%MODELSUBDIR%
 )
 IF NOT DEFINED TARGETPATH SET TARGETPATH=%DBASEPATH%
 IF DEFINED FULLMODELNAME SET TARGETPATH=%TARGETPATH%\%FULLMODELNAME%
@@ -106,13 +106,13 @@ IF NOT "%ISMOVED%"=="1" (
   IF ERRORLEVEL 8 GOTO error
 )
 
-ECHO   creating shortcut to DBASE directory ...
+ECHO   creating shortcut to target directory ...
 ECHO CSCRIPT "%TOOLSPATH%\CreateLink.vbs" "%SCRIPTNAME%.lnk.lnk" "%TARGETPATH%" >> %LOGFILE%
 CSCRIPT "%TOOLSPATH%\CreateLink.vbs" "%SCRIPTNAME%.lnk.lnk" "%TARGETPATH%" >nul
 IF "%ISMOVED%"=="1" (
   IF NOT EXIST "%SOURCEPATH%" MKDIR "%SOURCEPATH%"
-  ECHO CSCRIPT "%TOOLSPATH%\CreateLink.vbs" "%MovedPath - snelkoppeling.lnk" "%TARGETPATH%" >> %LOGFILE%
-  CSCRIPT "%TOOLSPATH%\CreateLink.vbs" "MovedPath - snelkoppeling.lnk" "%TARGETPATH%" >nul
+  ECHO CSCRIPT "%TOOLSPATH%\CreateLink.vbs" "%SOURCEPATH%\MovedPath - snelkoppeling.lnk" "%TARGETPATH%" >> %LOGFILE%
+  CSCRIPT "%TOOLSPATH%\CreateLink.vbs" "%SOURCEPATH%\MovedPath - snelkoppeling.lnk" "%TARGETPATH%" >nul
 )
 
 :success

@@ -1,15 +1,14 @@
 @ECHO OFF
-REM ******************************************
-REM * SIF-basis (Sweco)                      *
-REM * Version 1.1.0 December 2020            *
-REM *                                        *
-REM * Cleanup.bat                            *
-REM * DESCRIPTION                            * 
-REM *   Deletes files in temporary folder(s) *
-REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * MODIFICATIONS                          *
-REM *   2019-08-26 Initial version           *
-REM ******************************************
+REM *******************************************
+REM * SIF-basis v2.1.0 (Sweco)                *
+REM *                                         *
+REM * ExcelMapper.bat                         *
+REM * DESCRIPTION                             *
+REM *   Maps Excel template rows to textfile  *
+REM * AUTHOR(S): Koen van der Hauw (Sweco)    *
+REM * MODIFICATIONS                           *
+REM *   2021-05-31 Initial version            *
+REM *******************************************
 CALL :Initialization
 
 REM ***************

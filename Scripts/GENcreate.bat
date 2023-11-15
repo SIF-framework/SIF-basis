@@ -1,12 +1,12 @@
 @ECHO OFF
 REM ************************************************
-REM * SIF-basis (Sweco)                            *
-REM * Version 1.1.0 December 2020                  *
+REM * SIF-basis v2.1.0 (Sweco)                     *
 REM *                                              *
 REM * GENcreate.bat                                *
 REM * DESCRIPTION                                  *
 REM *   Creates GEN-file(s) for extent coordinates *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)         *
+REM * VERSION: 2.0.0                               *
 REM * MODIFICATIONS                                *
 REM *   2019-04-16 Initial version                 *
 REM ************************************************
@@ -42,9 +42,9 @@ SETLOCAL EnableDelayedExpansion
 
 TITLE SIF-basis: %SCRIPTNAME%
 
-SET MSG=Creating GEN-file(s) ...
-ECHO %MSG%
-ECHO %MSG% > %LOGFILE%
+ECHO Started script '%SCRIPTNAME%'...
+ECHO Started script '%SCRIPTNAME%'... > %LOGFILE%
+
 ECHO Base extent: %EXTENT%
 ECHO EXTENT=%EXTENT% >> %LOGFILE%
 IF NOT "%BUFFERDIST%" == "" (

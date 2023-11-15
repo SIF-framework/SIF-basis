@@ -1,12 +1,12 @@
 @ECHO OFF
 REM ******************************************
-REM * SIF-basis (Sweco)                      *
-REM * Version 1.1.0 December 2020            *
+REM * SIF-basis v2.1.0 (Sweco)               *
 REM *                                        *
 REM * Cleanup.bat                            *
-REM * DESCRIPTION                            * 
+REM * DESCRIPTION                            *
 REM *   Deletes files in temporary folder(s) *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
+REM * VERSION: 2.0.0                         *
 REM * MODIFICATIONS                          *
 REM *   2019-08-26 Initial version           *
 REM ******************************************
@@ -21,7 +21,7 @@ REM RECURSIONPATH: Path from which specified DELETEDFILES are searched recursive
 REM ISLOGDELETED:  Specify with value 1 that logfiles in current directory should be deleted
 REM ISLNKDELETED:  Specify with value 1 that lnk-files (shortcuts to files/folders) should be deleted from current directory 
 REM ISNOTRECYCLED: Specify with value 1 that deleted files and folders do NOT have to be placed in the recycle bin
-SET DELETEDPATHS=tmp,result
+SET DELETEDPATHS=tmp
 SET DELETEDFILES=
 SET RECURSIONPATH=
 SET ISLOGDELETED=

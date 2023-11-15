@@ -1,29 +1,33 @@
 @ECHO OFF
 REM ************************************************************
-REM * SIF-basis (Sweco)                                        *
-REM * Version 1.1.0 December 2020                              *
+REM * SIF-basis v2.1.0 (Sweco)                                 *
 REM *                                                          *
 REM * iMODValidator validation.bat                             *
+REM * DESCRIPTION                                              *
+REM *   Runs iMODValidator modelvalidation for a RUN-file.     *
+REM *   iMOD/Excel may be opened automically after validation. *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)                     *
-REM * DESCRIPTION                                              * 
-REM *   Runs iMODValidator modelvalidation for a RUN-file.     * 
-REM *   iMOD/Excel may be opened automically after validation. * 
+REM * VERSION: 2.0.0                                           *
 REM * MODIFICATIONS                                            *
 REM *   2017-08-01 Initial version                             *
 REM ************************************************************
 CALL :Initialization
-CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
-CALL "%SETTINGSPATH%\SIF.Settings.ModelRuns.bat"
+IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
+IF EXIST "%SETTINGSPATH%\SIF.Settings.Maps.bat" CALL "%SETTINGSPATH%\SIF.Settings.Maps.bat"
+IF EXIST "%SETTINGSPATH%\SIF.Settings.Model.bat" CALL "%SETTINGSPATH%\SIF.Settings.Model.bat"
+IF EXIST "%SETTINGSPATH%\SIF.Settings.ModelRuns.bat" CALL "%SETTINGSPATH%\SIF.Settings.ModelRuns.bat"
 
 REM ********************
 REM * Script variables *
 REM ********************
-REM MODELNAME:    Base modelname as MODELNAME[_SUBMODELNAME[_MODELPOSTFIX]] (without modelprefix) 
+REM MODELNAME:    Base modelname as MODELNAME[_SUBMODELNAME[_MODELPOSTFIX]] (without modelprefix), or leave empty to define RUN-filename via RUNFILEPATH
 REM MODELPATH:    Path to base modelrunfile, relative path from RUNFILES-folder to RUN-file, do not add last backslash. Leave empty to search default location (RUNFILESPATH\MODELNAME\SUBMODELNAME\MODELPOSTFIX).
+REM RUNFILEPATH:  Full path and filename to RUN-file if MODELNAME is not used. MODELPATH is ignored then.
 REM RESULTPATH:   Path to write results to, e.g. %WORKOUTPATH%\%MODELNAME:_=\%\validation\iMODValidator
 REM SETTINGSFILE: Path to iMODValidator XML-settingsfile, or leave empty to use default settings
-SET MODELNAME=ORG_BAS
+SET MODELNAME=
 SET MODELPATH=
+SET RUNFILEPATH=
 SET RESULTPATH=checks\iMODValidator
 SET SETTINGSFILE=%SETTINGSPATH%\SIF.Settings.iMODValidator.xml
 
@@ -36,6 +40,7 @@ SET SCRIPTNAME=%~n0
 SET LOGFILE="%SCRIPTNAME%.log"
 SET THISPATH=%~dp0
 SET THISPATH=%THISPATH:~0,-1%
+SET IMODVALIDATOREXE=%TOOLSPATH%\iMODValidator.exe
 
 REM *******************
 REM * Script commands *
@@ -47,23 +52,38 @@ TITLE SIF-basis: %SCRIPTNAME%
 SET MSG=Starting iMODValidator validation ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
+ECHO: 
 
 IF NOT "%RESULTPATH:~1,1%" == ":" (
   IF NOT "%RESULTPATH:~0,2%" == "\\" SET RESULTPATH=%THISPATH%\%RESULTPATH%
 )
 
-IF "%MODELPATH%" == "" (
-  SET MODELPATH=%RUNFILESPATH%\%MODELNAME:_=\%\%RUNFILEPREFIX%_%MODELNAME%.RUN
-) ELSE (
-  SET MODELPATH=%RUNFILESPATH%\%MODELPATH%\%RUNFILEPREFIX%_%MODELNAME%.RUN
-)
+IF NOT DEFINED RUNFILEPATH (
+  IF "%MODELPATH%" == "" (
+    SET RUNFILEPATH=%RUNFILESPATH%\%MODELNAME:_=\%\%RUNFILEPREFIX%_%MODELNAME%.RUN
+  ) ELSE (
+    SET RUNFILEPATH=%RUNFILESPATH%\%MODELPATH%\%RUNFILEPREFIX%_%MODELNAME%.RUN
+  )
+) 
 
 SET SETTINGSOPTION=
 IF NOT "%SETTINGSFILE%" == "" SET SETTINGSOPTION=/s:"%SETTINGSFILE%"
 
-IF NOT "%MODELNAME%"=="" (
-  ECHO "iMODValidator\iMODValidator.exe" %SETTINGSOPTION% "%MODELPATH%"  "%RESULTPATH%" >> %LOGFILE%
-  "%TOOLSPATH%\iMODValidator\iMODValidator.exe" %SETTINGSOPTION% "%MODELPATH%"  "%RESULTPATH%" >> %LOGFILE%
+IF DEFINED MODELNAME (
+  IF NOT EXIST "%RUNFILEPATH%" (
+    SET MSG=Specified RUN-file not found: %RUNFILEPATH%
+    ECHO !MSG!
+    ECHO !MSG! >> %LOGFILE%
+    GOTO error
+  )
+
+  IF EXIST "%TOOLSPATH%\Tee.exe" (
+    ECHO "%IMODVALIDATOREXE%" %SETTINGSOPTION% "%RUNFILEPATH%"  "%RESULTPATH%" >> %LOGFILE%
+    "%IMODVALIDATOREXE%" %SETTINGSOPTION% "%RUNFILEPATH%"  "%RESULTPATH%" | "%TOOLSPATH%\Tee.exe" /a %LOGFILE%
+  ) ELSE (
+    ECHO "%IMODVALIDATOREXE%" %SETTINGSOPTION% "%RUNFILEPATH%"  "%RESULTPATH%" >> %LOGFILE%
+    "%IMODVALIDATOREXE%" %SETTINGSOPTION% "%RUNFILEPATH%"  "%RESULTPATH%" >> %LOGFILE%
+  )
   IF ERRORLEVEL 1 GOTO error
 
   REM Check for issues in logfile
@@ -89,8 +109,14 @@ IF NOT "%MODELNAME%"=="" (
   ECHO   creating shortcut to iMOD in results directory ...
   CSCRIPT "%TOOLSPATH%\CreateLink.vbs" "%RESULTPATH%\iMOD.exe - snelkoppeling.lnk" "%EXEPATH%\iMOD\iMOD.EXE" >nul
 ) ELSE (
-  ECHO "%TOOLSPATH%\iMODValidator\iMODValidator.exe" %SETTINGSOPTION% >> %LOGFILE%
-  "%TOOLSPATH%\iMODValidator\iMODValidator.exe" %SETTINGSOPTION% 
+  REM Start iMODValidator in GUI-mode without a RUN-file
+  IF EXIST "%TOOLSPATH%\Tee.exe" (
+    ECHO "%IMODVALIDATOREXE%" %SETTINGSOPTION% >> %LOGFILE%
+    "%IMODVALIDATOREXE%" %SETTINGSOPTION% | "%TOOLSPATH%\Tee.exe" /a %LOGFILE%
+  ) ELSE (
+    ECHO "%IMODVALIDATOREXE%" %SETTINGSOPTION% >> %LOGFILE%
+    "%IMODVALIDATOREXE%" %SETTINGSOPTION% 
+  )
 )
 
 SET MSG=Script finished, see "%~n0.log"

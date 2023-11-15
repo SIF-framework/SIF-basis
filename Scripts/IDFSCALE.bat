@@ -1,13 +1,13 @@
 @ECHO OFF
 REM ******************************************
-REM * SIF-basis (Sweco)                      *
-REM * Version 1.1.0 December 2020            *
+REM * SIF-basis v2.1.0 (Sweco)               *
 REM *                                        *
 REM * IDFSCALE.bat                           *
-REM * DESCRIPTION                            * 
+REM * DESCRIPTION                            *
 REM *   Runs iMOD-batchfunction IDFSCALE for *
 REM *   one or more IDF-files.               *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2017-06-20 Initial version           *
 REM ******************************************
@@ -20,7 +20,7 @@ REM SOURCEPATH:   Path to IDF-file(s)
 REM IDFFILTER:    Filter for IDF-files to scale
 REM ISRECURSIVE:  Specify (with value 1) if all subdirectories of SOURCEPATH should be searched recursively for IDFFILTER-files, or leave empty to search in SOURCEPATH only
 REM SCALESIZE:    Cellsize to scale to. If empty or equal to cellsize of source IDF-file, the file is copied.
-REM SCLTYPE_UP:   Scaletype for upscaling: 1=boundary, 2=arithmetic mean, 3=geometric mean, 7=most frequent occurence, 10=blockvalue, 9=percentile, see iMOD-manual for other types. Or leave empty to skip upscaling.
+REM SCLTYPE_UP:   Scaletype for upscaling: 1=boundary, 2=arithmetic mean, 3=geometric mean, 4=sum, 5=sum conductance, 7=most frequent occurence, 10=blockvalue, 9=percentile, see iMOD-manual for other types. Or leave empty to skip upscaling.
 REM SCLTYPE_DOWN: Scaletype for downscaling: 1=interpolation, 2=gridvalue, see imod-manual for options. Or leave empty to skip downscaling. 
 REM WEIGHFACTOR:  Weight factor, optional in SCLTYPE_UP (types 1,3,4,5,6,9), the default value is 1.0
 REM PERCENTILE:   Percentile (between 0.0 and 1.0) in case of SCLTYPE_UP=9, otherwise leave empty
@@ -43,8 +43,8 @@ SET ISCOPYOTHER=1
 SET RESULTPATH=result
 SET RESULTFILE=
 
-REM IMODEXE:         Path to iMOD executable to use for IDFSCALE batchfunction, use %iMODEXE% for default or for example %EXEPATH%\iMOD\iMOD_V4_4_X64R.EXE
-REM DEL2BINEXE:      Path to Del2Bin.exe
+REM IMODEXE:    Path to iMOD executable to use for IDFSCALE batchfunction, use %iMODEXE% for default or for example %EXEPATH%\iMOD\iMOD_V4_4_X64R.EXE
+REM DEL2BINEXE: Path to Del2Bin.exe
 SET IMODEXE=%IMODEXE%
 SET DEL2BINEXE=%TOOLSPATH%\Del2Bin.exe
 
@@ -141,8 +141,23 @@ IF "%ISRECURSIVE%"=="1" (
           SET MSGPOSTFIX=(from cellsize !SOURCECELLSIZE!^) 
         )
         IF "%SCALESIZE%"=="!SOURCECELLSIZE!" (
-          SET ISIDFCOPIED=1
-          SET MSGPOSTFIX=(with cellsize %SCALESIZE%^) 
+          REM Check extent of source IDF-file
+          ECHO   CALL "%TOOLSPATH%\SIF.iMOD.runsub" :IDFINFO "!IDFFILEPATH!" 3 >> %LOGFILE%
+          CALL "%TOOLSPATH%\SIF.iMOD.runsub" :IDFINFO "!IDFFILEPATH!" 3
+          IF NOT "!IDFINFO!"=="0" (
+            SET SOURCEEXTENT=!IDFINFO!
+            REM For now assume extent is different and file should be scaled
+            SET MSGPOSTFIX=(with cellsize %SCALESIZE%, but different extent^) 
+
+            REM Compare extents
+            ECHO   CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "%WINDOW%" >> %LOGFILE%
+            CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "%WINDOW%"
+            IF ERRORLEVEL 1 GOTO error
+            IF "!ISEQUALEXTENT!"=="1" (
+              SET ISIDFCOPIED=1
+              SET MSGPOSTFIX=(with cellsize %SCALESIZE% and equal extent^) 
+            )
+          )
         )
       ) ELSE (
         IF NOT DEFINED RUNSUBBATNOTFOUND (
@@ -258,11 +273,28 @@ IF "%ISRECURSIVE%"=="1" (
         CALL "%TOOLSPATH%\SIF.iMOD.runsub" :IDFINFO "%SOURCEPATH%\!IDFFILENAME!" 1
         IF NOT "!IDFINFO!"=="0" (
           SET SOURCECELLSIZE=!IDFINFO!
+          REM For now assume cellsize is different and file should be scaled
           SET MSGPOSTFIX=(from cellsize !SOURCECELLSIZE!^) 
         )
         IF "%SCALESIZE%"=="!SOURCECELLSIZE!" (
-          SET ISIDFCOPIED=1
-          SET MSGPOSTFIX=(with cellsize %SCALESIZE%^) 
+          REM Check extent of source IDF-file
+          ECHO   CALL "%TOOLSPATH%\SIF.iMOD.runsub" :IDFINFO "%SOURCEPATH%\!IDFFILENAME!" 3 >> %LOGFILE%
+          CALL "%TOOLSPATH%\SIF.iMOD.runsub" :IDFINFO "%SOURCEPATH%\!IDFFILENAME!" 3
+          IF NOT "!IDFINFO!"=="0" (
+            SET SOURCEEXTENT=!IDFINFO!
+            REM For now assume extent is different and file should be scaled
+            SET MSGPOSTFIX=(with cellsize %SCALESIZE%, but different extent^) 
+
+            REM Compare extents
+            ECHO   CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "%WINDOW%" >> %LOGFILE%
+            CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "%WINDOW%"
+            IF ERRORLEVEL 1 GOTO error
+            
+            IF "!ISEQUALEXTENT!"=="1" (
+              SET ISIDFCOPIED=1
+              SET MSGPOSTFIX=(with cellsize %SCALESIZE% and equal extent^) 
+            )
+          )
         )
       ) ELSE (
         IF NOT DEFINED RUNSUBBATNOTFOUND (
@@ -375,6 +407,47 @@ ECHO %MSG% >> %LOGFILE%
 REM Set errorlevel for higher level scripts
 CMD /C "EXIT /B 1"
 GOTO exit
+
+REM FUNCTION: Check if specified extents are equal. To use: "CALL :ISEQUALEXTENT <EXTENT1> <EXTENT2> with EXTENT1/EXTENT2 in the form "XLL,YLL,XUR,YUR"
+REM Return values: environment variable ISEQUALEXTENT is set to 1 if extents are equal, 0 if different
+REM                ERRORLEVEL is set to 1 in case of an error
+:ISEQUALEXTENT
+  REM Remove possible double quotes
+  SET EXTENT1=%~1
+  SET EXTENT2=%~2
+  IF NOT DEFINED EXTENT1 (
+    ECHO EXTENT1 is not defined
+    EXIT /B 1
+  )
+  IF NOT DEFINED EXTENT2 (
+    ECHO EXTENT2 is not defined
+    EXIT /B 1
+  )
+
+  FOR /F "tokens=1,2,3* delims=," %%a IN ("%EXTENT1%") DO (
+    SET CLIPXLL1=%%a
+    SET CLIPYLL1=%%b
+    SET CLIPXUR1=%%c
+    SET CLIPYUR1=%%d
+  ) 
+  FOR /F "tokens=1,2,3* delims=," %%a IN ("%EXTENT2%") DO (
+    SET CLIPXLL2=%%a
+    SET CLIPYLL2=%%b
+    SET CLIPXUR2=%%c
+    SET CLIPYUR2=%%d
+  ) 
+  SET /A XLLSUM=CLIPXLL1 - CLIPXLL2
+  SET /A YLLSUM=CLIPYLL1 - CLIPYLL2
+  SET /A XURSUM=CLIPXUR1 - CLIPXUR2
+  SET /A YURSUM=CLIPYUR1 - CLIPYUR2
+
+  SET ISEQUALEXTENT=1
+  IF !XLLSUM! NEQ 0 SET ISEQUALEXTENT=0
+  IF !YLLSUM! NEQ 0 SET ISEQUALEXTENT=0
+  IF !XURSUM! NEQ 0 SET ISEQUALEXTENT=0
+  IF !YURSUM! NEQ 0 SET ISEQUALEXTENT=0
+  
+  EXIT /B 0
 
 REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat and "00 settings.bat'. To use: "CALL :Initialization", without arguments
 :Initialization

@@ -1,13 +1,13 @@
 @ECHO OFF
 REM *************************************************
-REM * SIF-basis (Sweco)                             *
-REM * Version 1.1.0 December 2020                   *
+REM * SIF-basis v2.1.0 (Sweco)                      *
 REM *                                               *
 REM * Clip model.bat                                *
-REM * DESCRIPTION                                   * 
+REM * DESCRIPTION                                   *
 REM *   Clips iMOD modelfiles in specified          *
 REM *   subdirectories to some extent               *
 REM * AUTHOR(S): Pim Dik, Koen van der Hauw (Sweco) *
+REM * VERSION: 2.0.0                                *
 REM * MODIFICATIONS                                 *
 REM *   2017-02-01 Initial version                  *
 REM *************************************************
@@ -25,6 +25,7 @@ REM METADATASUBDIRS:   List (comma seperated) of subdirectories to add metadata
 REM OVERWRITEMETADATA: Use 1 if existing metadata should be overwritten with clip details and sourcepath, or leave empty to add to existing metadata
 REM IS_WELTXT_DELETED: Use 1 if TXT-files of the WEL-package should be removed (to reduce filesize for steade-state models): use 1 to delete and 0 or empty otherwise
 REM WELDIR:            WEL-subdirectory when IS_WELTXT_DELETED=1
+REM ISERRORCONT:       Use 0 if clipping/script should be stopped when an error occurs: Default (1) is to continue and copy the source file instead of clipping
 REM RESULTPATH:        Path to target model (leave empty to place results in same folder as script)
 SET SOURCEPATH=C:\Data\XXX\DBASE\ORG
 SET BASEEXTENT=%MODELEXTENT%
@@ -35,6 +36,7 @@ SET METADATASUBDIRS=%CLIPPEDSUBDIRS%
 SET OVERWRITEMETADATA=
 SET IS_WELTXT_DELETED=0
 SET WELDIR=WEL
+SET ISERRORCONT=1
 SET RESULTPATH=%DBASEPATH%\ORG-test
 
 REM *********************
@@ -78,14 +80,18 @@ IF NOT EXIST "%SOURCEPATH%" (
 
 IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
 
-IF "%BUFFERDIST%"=="" SET BUFFERDIST=0
+IF NOT DEFINED BUFFERDIST SET BUFFERDIST=0
 
 REM Calculate clipextents
 FOR /F "tokens=1,2,3* delims=," %%a IN ("%BASEEXTENT%") DO (
-  SET /A CLIPXLL=%%a-%BUFFERDIST%
-  SET /A CLIPYLL=%%b-%BUFFERDIST%
-  SET /A CLIPXUR=%%c+%BUFFERDIST%
-  SET /A CLIPYUR=%%d+%BUFFERDIST%
+  SET CLIPXLL=%%a
+  SET /A CLIPXLL=CLIPXLL-%BUFFERDIST%
+  SET CLIPYLL=%%b
+  SET /A CLIPYLL=CLIPYLL-%BUFFERDIST%
+  SET CLIPXUR=%%c
+  SET /A CLIPXUR=CLIPXUR+%BUFFERDIST%
+  SET CLIPYUR=%%d
+  SET /A CLIPYUR=CLIPYUR+%BUFFERDIST%
 ) 
 SET CLIPEXTENT=%CLIPXLL% %CLIPYLL% %CLIPXUR% %CLIPYUR%
 
@@ -94,7 +100,9 @@ ECHO CLIPEXTENT=%CLIPEXTENT% >> %LOGFILE%
 
 REM Define clip options
 SET XOPTION=
+SET ERROPTION=
 IF NOT "%SKIPPEDEXTENSIONS%"=="" SET XOPTION=/x:%SKIPPEDEXTENSIONS%
+IF "%ISERRORCONT%"=="0" SET ERROPTION=/err
 
 REM Do clipping
 FOR %%D IN (%CLIPPEDSUBDIRS%) DO (
@@ -109,8 +117,8 @@ FOR %%D IN (%CLIPPEDSUBDIRS%) DO (
        "%TOOLSPATH%\Del2Bin.exe" /E /F /S "%RESULTPATH%\!CLIPPEDSUBDIR!" >> %LOGFILE%
        IF ERRORLEVEL 1 GOTO error
      )
-     ECHO "%TOOLSPATH%\iMODclip.exe" /r /o %XOPTION% "%SOURCEPATH%\!CLIPPEDSUBDIR!" "%RESULTPATH%\!CLIPPEDSUBDIR!" %CLIPEXTENT% >> %LOGFILE%
-     "%TOOLSPATH%\iMODclip.exe" /r /o %XOPTION% "%SOURCEPATH%\!CLIPPEDSUBDIR!" "%RESULTPATH%\!CLIPPEDSUBDIR!" %CLIPEXTENT% >> %LOGFILE%
+     ECHO "%TOOLSPATH%\iMODclip.exe" /r /o %XOPTION% %ERROPTION% "%SOURCEPATH%\!CLIPPEDSUBDIR!" "%RESULTPATH%\!CLIPPEDSUBDIR!" %CLIPEXTENT% >> %LOGFILE%
+     "%TOOLSPATH%\iMODclip.exe" /r /o %XOPTION% %ERROPTION% "%SOURCEPATH%\!CLIPPEDSUBDIR!" "%RESULTPATH%\!CLIPPEDSUBDIR!" %CLIPEXTENT% >> %LOGFILE%
      IF ERRORLEVEL 1 GOTO error
    )
 )  

@@ -1,12 +1,12 @@
 @ECHO OFF
 REM **********************************************
-REM * SIF-basis (Sweco)                          *
-REM * Version 1.1.1 November 2021                *
+REM * SIF-basis v2.1.0 (Sweco)                   *
 REM *                                            *
 REM * LayerManager.bat                           *
-REM * AUTHOR(S): Koen van der Hauw (Sweco)       *
-REM * DESCRIPTION                                * 
+REM * DESCRIPTION                                *
 REM *   Checks REGIS/iMOD layers for consistency *
+REM * VERSION: 2.0.0                             *
+REM * AUTHOR(S): Koen van der Hauw (Sweco)       *
 REM * MODIFICATIONS                              *
 REM *   2019-02-08 Initial version               *
 REM **********************************************
@@ -31,8 +31,8 @@ REM RESULTPATH:     Path to write/copy results to
 SET ISIMODMODEL=0
 SET TOPPATH=%ROOTPATH%\BASISDATA\REGIS\TOPBOT
 SET BOTPATH=%ROOTPATH%\BASISDATA\REGIS\TOPBOT
-SET KHPATH=%ROOTPATH%\BASISDATA\REGIS\TOP\KHKV
-SET KVPATH=%ROOTPATH%\BASISDATA\REGIS\TOP\KHKV
+SET KHPATH=%ROOTPATH%\BASISDATA\REGIS\KHV
+SET KVPATH=%ROOTPATH%\BASISDATA\REGIS\KVV
 SET KVAPATH=
 SET DEFAULTKVA=
 SET REGISORDERFILE=

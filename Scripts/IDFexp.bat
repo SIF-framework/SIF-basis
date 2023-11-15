@@ -1,12 +1,12 @@
 @ECHO OFF
 REM *******************************************
-REM * SIF-basis (Sweco)                       *
-REM * Version 1.1.0 December 2020             *
+REM * SIF-basis v2.1.0 (Sweco)                *
 REM *                                         *
 REM * IDFexp.bat                              *
-REM * AUTHOR(S): Koen van der Hauw (Sweco)    *
-REM * DESCRIPTION                             * 
+REM * DESCRIPTION                             *
 REM *   Processes IDF-expressions in INI-file *
+REM * AUTHOR(S): Koen van der Hauw (Sweco)    *
+REM * VERSION: 2.0.0                          *
 REM * MODIFICATIONS                           *
 REM *   2018-02-28 Initial version            *
 REM *******************************************
@@ -65,8 +65,26 @@ REM     - enlarge-function: e.g. enlarge(<exp1>,<exp2>)
 REM       to enlarge IDF-expression <exp1> with NoData to at least the extent of IDF-expression <exp2>
 REM     - clip-function: e.g. clip(<exp1>,<exp2>)
 REM       to clip IDF-expression <exp1> to the extent of IDF-expression <exp2>
+REM     - scale-function: scale(<exp1>,<exp2>[,<method>])
+REM       to scale IDF-expression <exp1> to the cellsize of (IDF-expression) <exp2>. Optional method:
+REM       for downscale: 0=Block (default)
+REM       for upscale: 0=Mean (default), 1=Median, 2=Minimum, 3=Maximum, 4=Most occurring, 5=Boundary
+REM     - bbox-function: bbox(<exp1>)
+REM       to find bounding box with all non-NoData-values; extent is not changed if only NoData-values are present
 REM     parenthesis ('(' and ')') can be used to group subexpressions
 REM     environment variables enclosed by %-symbols will be evaluated
+REM   FOR <i>=<i1> TO <i2>
+REM     to start a FOR-loop with index <i>, that loops from value i1 to i2; lines between FOR and the next ENDFOR-statement are repeated
+REM     the value of index <i> can be accessed by prefixing %%. FOR-loops can be nested. 
+REM     use simple expressions with indices with syntax '%%(i<op><val>)', where <op> is one of '+','-','*' or '/' and <val> an integer value, e.g. C_L%%i=(BOT_L%%i-TOP_L%%(i+1))*KVV_L%%i
+REM     loop values can be padded with zeroes by inserting zeroes after the %% substring: e.g. %%000p will result in values 009,010 and 011 for FOR-loop 'FOR p=9 TO 11'.
+REM   ENDFOR
+REM     to end a FOR-loop, increase index and continue at line after FOR-statement
+REM   #IF [NOT] <cond>: <cmd>
+REM     to use a precondition to check if a command should be executed; command <cmd> is executed
+REM     if precondition '[NOT] <cond>' evaluates to true; the following preconditions are allowed:
+REM     #IF [NOT] EXIST <path>: <cmd>
+REM       check if path <path> exists; surround with double quotes when the path may contain spaces
 REM   REM <comment>
 REM   // <comment>
 REM   ' <comment>
@@ -123,17 +141,12 @@ SETLOCAL EnableDelayedExpansion
 
 TITLE SIF-basis: %SCRIPTNAME%
 
-IF "%INIFILE%"=="" SET INIFILE=%SCRIPTNAME%.INI
-
 REM Log settings
 SET MSG=Starting %SCRIPTNAME% ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
-ECHO INIFILE=%INIFILE%
-ECHO INIFILE=%INIFILE% >> %LOGFILE%
-ECHO: 
-ECHO: >> %LOGFILE%
 
+REM Check result path
 IF NOT DEFINED RESULTPATH (
   SET MSG=RESULTPATH cannot be empty
   ECHO !MSG!
@@ -141,21 +154,39 @@ IF NOT DEFINED RESULTPATH (
   GOTO error
 )
 
+REM Check INI-file
+IF DEFINED INIFILE (
+  IF NOT EXIST "%INIFILE%" (
+    SET MSG=Defined INI-file not found: %INIFILE%
+    ECHO !MSG!
+    ECHO !MSG! >> %LOGFILE%
+    GOTO error
+  )
+) ELSE (
+  SET INIFILE=%SCRIPTNAME%.INI
+  IF NOT EXIST "!INIFILE!" (
+    ECHO REM Default INI-file, automatically created > "!INIFILE!"
+    ECHO FILE1=%%DBASEPATH%%\FILE1.IDF >> "!INIFILE!"
+    SET MSG=INI-file not found, default file created: !INIFILE!
+    ECHO !MSG!
+    ECHO !MSG! >> %LOGFILE%
+    GOTO error
+  )
+)
+
+REM Show used INI-filename
+ECHO INIFILE=%INIFILE%
+ECHO INIFILE=%INIFILE% >> %LOGFILE%
+ECHO: 
+ECHO: >> %LOGFILE%
+
 REM Create empty result directory
 IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
 IF ERRORLEVEL 1 GOTO error
 
-IF NOT EXIST "%INIFILE%" (
-  ECHO REM Default INI-file, automatically created > "%INIFILE%"
-  ECHO FILE1=%%DBASEPATH%%\FILE1.IDF >> "%INIFILE%"
-  SET MSG=INI-file not found, default file created: %INIFILE%
-  ECHO !MSG!
-  ECHO !MSG! >> %LOGFILE%
-  GOTO error
-)
-
 SET EXTENTOPTION=
-IF NOT "%EXTENT%"=="" SET EXTENTOPTION=/e:"%EXTENT%"
+IF DEFINED EXTENT SET EXTENTOPTION=/e:"%EXTENT%"
+
 REM Processing INI-file
 ECHO "%TOOLSPATH%\IDFexp" %IDFEXPOPTIONS% %EXTENTOPTION% "%INIFILE%" "%RESULTPATH%" >> %LOGFILE%
 "%TOOLSPATH%\IDFexp" %IDFEXPOPTIONS% %EXTENTOPTION% "%INIFILE%" "%RESULTPATH%" >> %LOGFILE%
@@ -193,8 +224,8 @@ GOTO exit
 :error
 ECHO:
 SET MSG=AN ERROR HAS OCCURRED^^! Check logfile "%~n0.log"
-ECHO !MSG!
-ECHO !MSG! >> %LOGFILE%
+ECHO %MSG%
+ECHO %MSG% >> %LOGFILE%
 REM Set errorlevel for higher level scripts
 CMD /C "EXIT /B 1"
 GOTO exit

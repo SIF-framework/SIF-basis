@@ -1,13 +1,13 @@
 @ECHO OFF
 REM **********************************************
-REM * SIF-basis (Sweco)                          *
-REM * Version 1.1.0 December 2020                *
+REM * SIF-basis v2.1.0 (Sweco)                   *
 REM *                                            *
 REM * CopyToDBASE.bat                            *
-REM * AUTHOR(S): Koen van der Hauw (Sweco)       *
 REM * DESCRIPTION                                *
 REM *   Copies modelfiles to DBASE subdirs       *
 REM *   MET-files are updated and copied as well *
+REM * AUTHOR(S): Koen van der Hauw (Sweco)       *
+REM * VERSION: 2.0.0                             *
 REM * MODIFICATIONS                              *
 REM *   2016-08-01 Initial version               *
 REM *   2017-10-01 Version with subdirs/removal  *
@@ -69,7 +69,7 @@ IF DEFINED MODELSUBDIR SET FULLMODELRELPATH=%FULLMODELRELPATH%\%MODELSUBDIR%
 
 REM Check DBASEPATH is defined, before continuing with copying data to some unexpected place
 IF NOT DEFINED DBASEPATH (
-  SET MSG=Variable DBASEPATH not defined, ensure path to set_project.bat is correctly defined ...
+  SET MSG=variable DBASEPATH not defined, ensure script is run from model subdirectory and that SIF.Settings.Project.bat is in SETTINGS-path
   ECHO !MSG!
   ECHO !MSG! > %LOGFILE%
   GOTO error
@@ -167,7 +167,7 @@ FOR /L %%i IN (0,1,%N%) DO (
             DIR /B "!TARGETPATH!" >> %LOGFILE%
             ECHO "%TOOLSPATH%\Del2Bin.exe" /E /S "!TARGETPATH!" >> %LOGFILE%
             "%TOOLSPATH%\Del2Bin.exe" /E /S "!TARGETPATH!" >> %LOGFILE% 2>&1
-	    IF ERRORLEVEL 1 GOTO error
+            IF ERRORLEVEL 1 GOTO error
             ECHO: >> %LOGFILE%
           )
         )
@@ -179,27 +179,30 @@ FOR /L %%i IN (0,1,%N%) DO (
   
   REM Move/copy files to DBASE
   FOR %%G IN ("!SOURCEPATH!\!FILTER!") DO (
-    IF "%ISMOVED%"=="1" (
-      SET MSG=    moving %%~nxG ...
-      ECHO !MSG!
-      ECHO !MSG! >> %LOGFILE%
-      ECHO MOVE /Y "!SOURCEPATH!\%%~nxG" "!TARGETPATH!" >> %LOGFILE%
-      MOVE /Y "!SOURCEPATH!\%%~nxG" "!TARGETPATH!" > %TMPFILE%
-    ) ELSE (
-      SET MSG=    copying %%~nxG ...
-      ECHO !MSG!
-      ECHO !MSG! >> %LOGFILE%
-      ECHO XCOPY /Y /S "!SOURCEPATH!\%%~nxG" "!TARGETPATH!" >> %LOGFILE%
-      XCOPY /Y /S "!SOURCEPATH!\%%~nxG" "!TARGETPATH!" > %TMPFILE%
-      REM XCOPY /Y /S "!SOURCEPATH!\%%~nxG" "!TARGETPATH!" > %TMPFILE% 2>&1
-    )
-    IF ERRORLEVEL 1 (
-      TYPE %TMPFILE%
+    IF /I NOT "%%~xG"==".MET" IF /I NOT "%%~xG"==".lnk" (
+      IF "%ISMOVED%"=="1" (
+        SET MSG=    moving %%~nxG ...
+        ECHO !MSG!
+        ECHO !MSG! >> %LOGFILE%
+        ECHO MOVE /Y "!SOURCEPATH!\%%~nxG" "!TARGETPATH!" >> %LOGFILE%
+        MOVE /Y "!SOURCEPATH!\%%~nxG" "!TARGETPATH!" > %TMPFILE%
+      ) ELSE (
+        SET MSG=    copying %%~nxG ...
+        ECHO !MSG!
+        ECHO !MSG! >> %LOGFILE%
+        ECHO XCOPY /Y /S "!SOURCEPATH!\%%~nxG" "!TARGETPATH!" >> %LOGFILE%
+        XCOPY /Y /S "!SOURCEPATH!\%%~nxG" "!TARGETPATH!" > %TMPFILE%
+      )
+      IF ERRORLEVEL 1 (
+        TYPE %TMPFILE%
+        TYPE %TMPFILE% >> %LOGFILE%
+        DEL %TMPFILE%
+        GOTO error
+      )
       TYPE %TMPFILE% >> %LOGFILE%
-      DEL %TMPFILE%
-      GOTO error
+
+      SET /A NFILES=NFILES + 1
     )
-    TYPE %TMPFILE% >> %LOGFILE%
   
     REM Copy metadata if present
     IF EXIST "!SOURCEPATH!\%%~nG.MET" (
@@ -231,8 +234,6 @@ FOR /L %%i IN (0,1,%N%) DO (
       "%TOOLSPATH%\iMODmetadata" "!TARGETPATH!\%%~nxG" "%%~dpnxG" "" !METADATAVERSION! ="%MODELREF0% %MODELREFERENCE%" "%METADATADESCRIPTION%" "%CONTACTORG%" "" "" "" "%SOURCEPATH%; " "Zie %THISPATH:~,-1%" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" "%CONTACTEMAIL%" >> %LOGFILE%
       IF ERRORLEVEL 1 GOTO error
     )
-    
-    SET /A NFILES=NFILES + 1
   )
   IF "%ISMOVED%"=="1" (
     REM Put symbolic link in source path
@@ -245,7 +246,13 @@ FOR /L %%i IN (0,1,%N%) DO (
   SET PACKAGEDIRSTRING=!PACKAGEDIR!-file(s^)
   IF "!PACKAGEDIRS!"=="." SET PACKAGEDIRSTRING=file(s^)
   SET /A NTOTALFILES=NTOTALFILES+NFILES
-  ECHO   !NFILES! !PACKAGEDIRSTRING! have been copied to !TARGETPATH:%ROOTPATH%=!
+  IF "%ISMOVED%"=="1" (
+    SET MSG=  !NFILES! !PACKAGEDIRSTRING! have been moved to !TARGETPATH:%ROOTPATH%\=!
+  ) ELSE (
+    SET MSG=  !NFILES! !PACKAGEDIRSTRING! have been copied to !TARGETPATH:%ROOTPATH%\=!
+  )
+  ECHO !MSG!
+  ECHO !MSG! >> %LOGFILE%
   ECHO:
   ECHO: >> %LOGFILE%
 )
@@ -258,7 +265,7 @@ CSCRIPT "%TOOLSPATH%\CreateLink.vbs" "DBASE %FULLMODELRELPATH:\=_% - snelkoppeli
 ECHO:
 ECHO: >> %LOGFILE%
 
-SET MSG=Script finished, !NTOTALFILES! file(s^) copied, see "%~n0.log"
+SET MSG=Script finished, see "%~n0.log"
 ECHO %MSG%
 ECHO %MSG% >> %LOGFILE%
 REM Set errorlevel 0 for higher level scripts

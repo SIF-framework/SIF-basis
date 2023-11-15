@@ -1,12 +1,12 @@
 @ECHO OFF
 REM *******************************************
-REM * SIF-basis (Sweco)                       *
-REM * Version 1.1.0 December 2020             *
+REM * SIF-basis v2.1.0 (Sweco)                *
 REM *                                         *
 REM * ReplaceText.bat                         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)    *
-REM * DESCRIPTION                             * 
+REM * DESCRIPTION                             *
 REM *   Replaces texts in one or more files   *
+REM * VERSION: 2.0.0                          *
 REM * MODIFICATIONS                           *
 REM *   2019-10-14 Initial version            *
 REM *******************************************

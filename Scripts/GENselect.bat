@@ -2,81 +2,86 @@
 REM ******************************************
 REM * SIF-basis v2.1.0 (Sweco)               *
 REM *                                        *
-REM * ASC2IDF.bat                            *
-REM * DESCRIPTION                            *
-REM *   converts ASC-files to IDF            *
+REM * GENselect.bat                          *
+REM * DESCRIPTION                            * 
+REM *   Selects features from GEN-file(s)    *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
 REM * VERSION: 2.0.0                         *
 REM * MODIFICATIONS                          *
-REM *   2020-02-12 Initial version           *
+REM *   2022-10-09 Initial version           *
 REM ******************************************
 CALL :Initialization
-IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
 
 REM ********************
 REM * Script variables *
 REM ********************
-REM SOURCEPATH: Path to ASC-files
-REM ASCFILTER:  Filter for ASC-files, e.g. *.ASC
-REM RESULTPATH: Path to subdirectory where scriptresults are stored
-SET SOURCEPATH=%ROOTPATH%\..\..\Gegevens\Basisdata
-SET ASCFILTER=*.ASC
-SET RESULTPATH=tmp
+REM GENPATH:      Path for input GEN-file(s)
+REM GENFILTER:    Filter for input GEN-file(s)
+REM Specify optional logical expression to select column values with
+REM EXPCOLNR:     For logical expression: specifiy (one based) column number of column to evaluate. Note: columnvalues are checked to determine type. Inconsistencies or a single empty string will result in type 'string'.
+REM EXPOP:        For logical expression: specify logical operator: eq, gt, gteq, lt, lteq, uneq. Note: gt, gteq, lt and lteq might behave unexpected for string type comparisons, which is based on (ordinal) alphabetical order.
+REM EXPVAL:       For logical expression: specify (string, integer, double, DateTime) value to compare with. Leave empty for empty string.
+REM CHANGE_EXPS:  One or more column expressions, seperated by semicolons, for modifying columns of selected rows and copy other rows, or leave empty to copy only selected rows. E.g. 3,*2.5,NaN;TOP,-1
+REM               Each column/exp-definition is specified by 'c,e,n', where:
+REM                'c' is a (one based) column index or a column name. If a column name is not found it is added, where non-selected points will receive an empty string as a value.
+REM                'e' is a constant value or a simple expression, defined as operator and value. Valid operators are: *, /, + and -.
+REM                'n' is an optional NoData-value for new columns and rows that were not selected.
+REM USEREGEXP:    Specify 1 to use regular expressions for string values in combination with (un)equal operator, leave empty or 0 otherwise
+REM               An example expression is: '^^(7^|8)$' (without surrounding quotes) to select features with value 7 or 8 in the specified column. For some symbols you need escape characters, in this case for '^' and '|'.
+REM               Both regular expressions and escape characters in batchfiles are standard techniques. Check online documentation for details.
+REM RESULTPATH:   Result path or filename output GEN-file. If no filename is specified the source name with postfix _sel is used.
+SET GENPATH=tmp
+SET GENFILTER=*.GEN
+SET EXPCOLNR=6
+SET EXPOP=uneq
+SET EXPVAL=XXX_PP.*
+SET CHANGE_EXPS=
+SET USEREGEXP=1
+SET RESULTPATH=result
 
 REM *********************
 REM * Derived variables *
 REM *********************
 SET SCRIPTNAME=%~n0
 SET LOGFILE="%SCRIPTNAME%.log"
-SET INIFILE="%SCRIPTNAME%.INI"
-SET IMODEXE=%IMODEXE%
 
 REM *******************
 REM * Script commands *
 REM *******************
-SETLOCAL EnableDelayedExpansion
+SETLOCAL ENABLEDELAYEDEXPANSION
 
 TITLE SIF-basis: %SCRIPTNAME%
 
-REM Check that the specified paths exist
-IF NOT EXIST "%SOURCEPATH%" (
-   ECHO The specified SOURCEPATH does not exist: %SOURCEPATH%
-   ECHO The specified SOURCEPATH does not exist: %SOURCEPATH% > %LOGFILE%
-   GOTO error
-)
-
-REM Create empty result directory
-IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
-IF ERRORLEVEL 1 GOTO error
-
-REM Log settings
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Selecting features in GEN-file(s^) with filter '%GENFILTER%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
-ECHO   SOURCEPATH=%SOURCEPATH%
-ECHO   SOURCEPATH=%SOURCEPATH% >> %LOGFILE%
-ECHO   ASCFILTER=%ASCFILTER%
-ECHO   ASCFILTER=%ASCFILTER% >> %LOGFILE%
 
-SET MSG=Starting ASC-file conversion...
-ECHO %MSG%
-ECHO %MSG% >> %LOGFILE%
-
-ECHO FUNCTION=CREATEIDF > %INIFILE%
-ECHO SOURCEDIR="%SOURCEPATH%\%ASCFILTER%" >> %INIFILE%
-ECHO "%IMODEXE%" %INIFILE% >> %LOGFILE%
-"%IMODEXE%" %INIFILE% >> %LOGFILE%
-IF ERRORLEVEL 1 GOTO error
-IF EXIST %INIFILE% DEL %INIFILE%
-IF EXIST "tmp\*_dir_imod.bat" DEL /F /Q "tmp\*_dir_imod.bat"
-IF EXIST "tmp\*_dir_imod.txt" DEL /F /Q "tmp\*_dir_imod.txt"
-REM IF EXIST TMP RMDIR TMP >NUL 2>&1
-
-IF NOT "%RESULTPATH%" == "%SOURCEPATH%" (
-  ECHO MOVE /Y "%SOURCEPATH%\%ASCFILTER:.ASC=.IDF%" "%RESULTPATH%" >> %LOGFILE%
-  MOVE /Y "%SOURCEPATH%\%ASCFILTER:.ASC=.IDF%" "%RESULTPATH%" >> %LOGFILE% 2>&1
-  IF ERRORLEVEL 1 GOTO error
+REM Build option strings
+SET EXPOPTION=
+SET CHANGEOPTION=
+SET REGEXPOPTION=
+IF DEFINED EXPCOLNR (
+  IF DEFINED EXPOP (
+    SET MSG=  SELECT_EXP=%EXPCOLNR%,%EXPOP%,"%EXPVAL%"
+    ECHO !MSG!
+    ECHO !MSG! >> %LOGFILE%
+    SET EXPOPTION=/x:%EXPCOLNR%,%EXPOP%,"%EXPVAL%"
+  )
 )
+IF NOT "%CHANGE_EXPS%" == "" (
+  SET MSG=  CHANGE_EXPS=%CHANGE_EXPS%
+  ECHO !MSG!
+  ECHO !MSG! >> %LOGFILE%
+  SET CHANGEOPTION=/c:"%CHANGE_EXPS%"
+)
+IF "%USEREGEXP%"=="1" SET REGEXPOPTION=/r
+
+ECHO "GENselect.exe" %REGEXPOPTION% %EXPOPTION% %CHANGEOPTION% "%GENPATH%" "%GENFILTER%" "%RESULTPATH%" >> %LOGFILE%
+"%TOOLSPATH%\GENselect.exe" %REGEXPOPTION% %EXPOPTION% %CHANGEOPTION% "%GENPATH%" "%GENFILTER%" "%RESULTPATH%" >> %LOGFILE%
+IF ERRORLEVEL 1 GOTO error
+
+ECHO: 
+ECHO: >> %LOGFILE%
 
 :success
 SET MSG=Script finished, see "%~n0.log"

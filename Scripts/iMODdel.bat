@@ -1,13 +1,13 @@
 @ECHO OFF
 REM ********************************************
-REM * SIF-basis (Sweco)                        *
-REM * Version 1.1.0 December 2020              *
+REM * SIF-basis v2.1.0 (Sweco)                 *
 REM *                                          *
 REM * iMODdel.bat                              *
 REM * DESCRIPTION                              *
 REM *   Delete iMOD-files in specified path(s) *
 REM *   selectively (e.g. empty files)         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)     *
+REM * VERSION: 2.0.0                           *
 REM * MODIFICATIONS                            *
 REM *   2019-08-26 Initial version             *
 REM ********************************************
@@ -50,7 +50,7 @@ SET MSG=Starting %SCRIPTNAME% ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
-IF NOT DEFINED DELETEDPATHS% (
+IF NOT DEFINED DELETEDPATHS (
   SET MSG=DELETEDPATHS cannot be empty
   ECHO !MSG!
   ECHO !MSG! >> %LOGFILE%

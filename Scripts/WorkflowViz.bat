@@ -1,12 +1,14 @@
 @ECHO OFF
 REM ******************************************
-REM * SIF-basis (Sweco)                      *
-REM * Version 1.1.1 November 2021            *
+REM * SIF-basis v2.1.0 (Sweco)               *
 REM *                                        *
 REM * WorkflowViz.bat                        *
-REM * DESCRIPTION                            * 
+REM * DESCRIPTION                            *
 REM *   For visualization of SIF-workflows   *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
+REM * VERSION: 2.0.0                         *
+REM * MODIFICATIONS                          *
+REM *   2021-08-20 Initial version           *
 REM ******************************************
 CALL :Initialization
 

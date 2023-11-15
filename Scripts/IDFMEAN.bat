@@ -1,13 +1,13 @@
 @ECHO OFF
 REM **********************************************
-REM * SIF-basis (Sweco)                          *
-REM * Version 1.1.0 December 2020                *
+REM * SIF-basis v2.1.0 (Sweco)                   *
 REM *                                            *
 REM * IDFMEAN.bat                                *
-REM * DESCRIPTION                                * 
+REM * DESCRIPTION                                *
 REM *   Calculates mean from transient IDF-files *
-REM *   with iMOD-batchfunction IDFMEAN.         *  
+REM *   with iMOD-batchfunction IDFMEAN.         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)       *
+REM * VERSION: 2.0.0                             *
 REM * MODIFICATIONS                              *
 REM *   2020-03-30 Initial version               *
 REM **********************************************
@@ -21,10 +21,10 @@ REM ********************
 REM * Script variables *
 REM ********************
 REM IDFPATH:     Path to IDF-files
-REM IDFFILTER:   Specify filter for IDF-files to scale
+REM IDFFILTER:   Specify filter for IDF-files to scale, e.g. HEAD*.IDF; do not include year, month, day or layer before or after the wildcard *. This option is activated whenever ILAYER is speci?ed.
 REM CFUNC:       Name of function to apply: MEAN - mean values (equal weighed); MIN - minimum values; MAX maximum values; SUM sum of values per grid cell; PERC percentile value (see PERCVALUE). Default is MEAN.
 REM PERCVALUE:   Percentile value, when CFUNC=PERC, e.g. PERCVALUE=50.0 for median values.
-REM ILAYER:      One of more (comma separated) layers to be used in the calculation
+REM ILAYER:      One of more (comma separated) layers to be used in the calculation, or leave empty to process all files as specified by IDFFILTER.
 REM SDATE:       Start date (yyyymmdd) for which IDF-files are used (optional), e.g. SDATE=19980201. This keyword is obligate whenever ILAYER is specified.
 REM EDATE:       End date (yyyymmdd) for which IDF-files are used (optional), e.g. SDATE=19980201. This keyword is obligate whenever ILAYER is specified.
 REM IYEAR:       One or more (comma seperated) years (within SDATE and EDATE) to be used exclusively (optional), e.g. 2001,2003,2005
@@ -96,8 +96,6 @@ IF "%EDATE"=="" (
   GOTO error
 )
 
-REM Create empty result directory
-IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
 IF "%ISDELRESULT%"=="1" (
   IF EXIST "%RESULTPATH%\*" (
     IF EXIST "%TOOLSPATH%\Del2Bin.exe" (
@@ -113,6 +111,9 @@ IF "%ISDELRESULT%"=="1" (
   ) 
 )
 
+REM Create empty result directory
+IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
+
 REM Log settings
 SET MSG=Starting %SCRIPTNAME% ...
 ECHO %MSG%
@@ -122,7 +123,7 @@ ECHO %MSG%
 ECHO %MSG% >> %LOGFILE%
 ECHO:
 
-SET MSG=Calculating %CFUNC% for %SDATE% to %EDATE% ...
+SET MSG=Calculating %CFUNC%%PERCVALUE% for %SDATE% to %EDATE% ...
 ECHO %MSG%
 ECHO %MSG% >> %LOGFILE%
 

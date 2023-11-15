@@ -1,13 +1,13 @@
 @ECHO OFF
 REM *****************************************************
-REM * SIF-basis (Sweco)                                 *
-REM * Version 1.1.0 December 2020                       *
+REM * SIF-basis v2.1.0 (Sweco)                          *
 REM *                                                   *
 REM * Runscripts                                        *
-REM * AUTHOR(S): Koen van der Hauw (Sweco)              *
-REM * DESCRIPTION                                       * 
+REM * DESCRIPTION                                       *
 REM *   Runs all batchfiles from specified subdirectory *
 REM *   Before running, first deletes existing logfiles *
+REM * AUTHOR(S): Koen van der Hauw (Sweco)              *
+REM * VERSION: 2.0.0                                    *
 REM * MODIFICATIONS                                     *
 REM *   2017-10-25 Initial version                      *
 REM *****************************************************
@@ -27,7 +27,7 @@ REM PREMSG:         Specify message to show before running scripts, or leave emp
 SET BASEPATH=
 SET SUBDIR=
 SET SKIPPEDSCRIPTS=
-SET ISRECURSIVE=1
+SET ISRECURSIVE=
 SET ISSUBLOGSHOWN=
 SET ISSKIPSHOWN=1
 SET ISOLDLOGDEL=1
@@ -37,9 +37,11 @@ REM *********************
 REM * Derived variables *
 REM *********************
 REM RUNSCRIPTPREFIX: Prefix of Runscripts-batchfiles, to determine SUBIR automatically and to skip executing Runscripts-batchfiles when ISRECURSIVE is set
-REM DEFSETTINGFILE:  Name of a default settingsfile that is always skipped
+REM SETTINGFILENAME: Name of a default settingsfile that is always skipped
+REM CHECKLOGPAUSE:   Specify (with value 1) that script should only be paused before running when a corresponding logfile already exists, otherwise it is always paused before running.
 SET RUNSCRIPTPREFIX=Runscripts 
 SET SETTINGFILENAME=00 Settings
+SET CHECKLOGPAUSE=1
 SET RUNSCRIPTNAME=%~n0
 SET RUNSCRIPTPATH=%~dp0
 SET RUNSCRIPTSLOGFILE="%RUNSCRIPTPATH%%RUNSCRIPTNAME%.log"
@@ -49,7 +51,7 @@ REM * Script commands *
 REM *******************
 SETLOCAL EnableDelayedExpansion
 
-TITLE SIF-basis: %RUNSCRIPTNAME%
+TITLE SIF-basis: Running '%RUNSCRIPTNAME%' ...
 
 SET CURRENTSCRIPT=%RUNSCRIPTNAME%
 SET CURRENTSCRIPTNAME=%RUNSCRIPTNAME%
@@ -58,15 +60,44 @@ SET CURRENTSCRIPTRELPATH=.
 REM Note: messages are echoed to the console (via the standard error), to the logfile of this script and if this script is called
 REM from a higher level Runscripts batchfile, also explicitly forced to the console to allow writing message both to a logfile and console
 
-REM Check is this is a top-level script that is calling other RunScripts-batchfiles
-REM For a top-level script HASTOPLEVELSCRIPT=1 and ISLOWLEVELSCRIPT=0
+REM Retrieve name of two directories above ROOTPATH-directory to display
+FOR %%F in ("%ROOTPATH%") DO SET PARENT1DIR=%%~nxF
+FOR %%F in ("%ROOTPATH%\..") DO SET PARENT2DIR=%%~nxF
+SET DISPLAYNAME=%PARENT2DIR%\%PARENT1DIR%
+
+TITLE SIF-basis: Running '%RUNSCRIPTNAME%' in '%DISPLAYNAME%' ...
+
+REM Check if this is a top-level script that is calling other RunScripts-batchfiles
+REM For a top-level script: 1) ISTOPLEVELSCRIPT=1 and 2) HASTOPLEVELSCRIPT=1 and ISLOWLEVELSCRIPT=0
 IF "%HASTOPLEVELSCRIPT%"=="1" (
   REM HASTOPLEVELSCRIPT has been set by previous RunScripts-call, so this must be a lower level RunScripts-call
   SET ISLOWLEVELSCRIPT=1
   SET INDENTATION=  %INDENTATION%
 ) ELSE (
+  SET ISTOPLEVELSCRIPT=1
   SET HASTOPLEVELSCRIPT=1
   SET INDENTATION=
+)
+
+REM Check if warning needs to be shown and script should be paused
+IF "%ISTOPLEVELSCRIPT%"=="1" (
+  ECHO Started script '%RUNSCRIPTNAME%' in: %CD%
+  ECHO:
+  
+  SET ISPAUSED=
+  IF "%CHECKLOGPAUSE%"=="1" (
+    IF EXIST %RUNSCRIPTSLOGFILE% (
+      SET MSG=Logfile already exists, script has been run before. Press any key to rerun this script or press CTRL-c to abort.
+      SET ISPAUSED=1
+    )
+  ) ELSE (
+    SET MSG=Press any key to start running '%RUNSCRIPTNAME%' in '%DISPLAYNAME%'. Or press CTRL-c to abort.
+    SET ISPAUSED=1
+  )
+  IF "!ISPAUSED!"=="1" (
+    ECHO !MSG! >CON
+    PAUSE >NUL
+  )
 )
 
 REM If SUBDIR is empty, use default, i.e. the part after the RUNSCRIPTPREFIX in the current scriptname
@@ -97,9 +128,16 @@ IF "%ISRECURSIVE%"=="1" (
 SET NOPAUSE=1
 
 REM Write 'running'-message to console for toplevel scripts (via standard error) and only to logfile(s) for lower level scripts (toplevel logfile via standard error and local logfile directly) 
-SET MSG=%INDENTATION%Running scripts in subdirectory '%SUBDIR%'%RECURSIVESTRING%: 
-ECHO %MSG% 1>&2
-ECHO %MSG% > %RUNSCRIPTSLOGFILE%
+IF "%ISTOPLEVELSCRIPT%"=="1" (
+  SET RELATIVEPATH=!CD:%ROOTPATH%\=!
+  SET MSG=Running '%~nx0'%RECURSIVESTRING% in '!RELATIVEPATH!' ...
+  ECHO !MSG! 1>&2
+  ECHO !MSG! > %RUNSCRIPTSLOGFILE%
+) ELSE (
+  SET MSG=%INDENTATION%Running scripts%RECURSIVESTRING% in subdirectory '%SUBDIR%' ...
+  ECHO !MSG! 1>&2
+  ECHO !MSG! > %RUNSCRIPTSLOGFILE%
+)
 
 REM Show pre message if defined
 IF DEFINED PREMSG (
@@ -125,7 +163,7 @@ IF DEFINED RECURSIVE_SKIPPEDSCRIPTSTRING (
 IF "%ISSKIPSHOWN%"=="1" (
   REM Write skipped strings if new strings were added.
   IF DEFINED ISSKIPLISTMODIFIED (
-    SET MSG=%INDENTATION%  skipped scriptstrings: %RECURSIVE_SKIPPEDSCRIPTSTRING%
+    SET MSG=%INDENTATION%  Skipped script strings: %RECURSIVE_SKIPPEDSCRIPTSTRING%
     ECHO !MSG! 1>&2
     ECHO !MSG! >> %RUNSCRIPTSLOGFILE%
     IF "%ISLOWLEVELSCRIPT%"=="1" ECHO !MSG! >CON
@@ -147,7 +185,7 @@ CD "%BASEPATH%%SUBDIR%"
 REM Remove old logfiles
 IF EXIST "*.LOG" (
   IF "%ISOLDLOGDEL%"=="1" (
-    ECHO DEL /Q *.LOG >> %RUNSCRIPTSLOGFILE%
+    ECHO %INDENTATION%  DEL /Q *.LOG >> %RUNSCRIPTSLOGFILE%
     DEL /Q *.LOG >> %RUNSCRIPTSLOGFILE%
   )
 )
@@ -179,7 +217,7 @@ FOR %RECURSIVEOPTION% %%G IN (*.BAT) DO (
   IF NOT "!CURRENTSCRIPTNAME:%SETTINGFILENAME%=!"=="!CURRENTSCRIPTNAME!" SET ISSKIPPED=1
   IF NOT "!ISSKIPPED!"=="1" (
     CD "%BASEPATH%!CURRENTSCRIPTRELPATH!"
-    SET MSG=%INDENTATION%  Starting !CURRENTSCRIPTRELPATH!\!CURRENTSCRIPTNAME! ...
+    SET MSG=%INDENTATION%  Starting '!CURRENTSCRIPTRELPATH!\!CURRENTSCRIPTNAME!' ...
     ECHO !MSG! 1>&2
     ECHO !MSG! >> %RUNSCRIPTSLOGFILE%
     IF "%ISLOWLEVELSCRIPT%"=="1" ECHO !MSG! >CON
@@ -202,7 +240,7 @@ FOR %RECURSIVEOPTION% %%G IN (*.BAT) DO (
       CALL "%%G" 2>> %RUNSCRIPTSLOGFILE%
     )
   ) ELSE (
-    SET MSG=%INDENTATION%  Skipped !CURRENTSCRIPTRELPATH!\!CURRENTSCRIPTNAME!
+    SET MSG=%INDENTATION%  Skipped '!CURRENTSCRIPTRELPATH!\!CURRENTSCRIPTNAME!'
     REM Write skip message if script is not a RunScripts-batchfile or the defined settingsfile
     IF "!CURRENTSCRIPTNAME:%RUNSCRIPTPREFIX%=!"=="!CURRENTSCRIPTNAME!" (
       IF "!CURRENTSCRIPTNAME:%SETTINGFILENAME%=!"=="!CURRENTSCRIPTNAME!" (
@@ -221,8 +259,8 @@ FOR %RECURSIVEOPTION% %%G IN (*.BAT) DO (
 CD "%RUNSCRIPTPATH%"
 
 :success
-TITLE SIF-basis: %RUNSCRIPTNAME%
-SET MSG=%INDENTATION%Script %RUNSCRIPTNAME% finished
+TITLE SIF-basis: Finished '%RUNSCRIPTNAME%' in '%DISPLAYNAME%'
+SET MSG=%INDENTATION%Script '%RUNSCRIPTNAME%' finished
 ECHO !MSG!
 ECHO !MSG! >> %RUNSCRIPTSLOGFILE%
 ECHO:
@@ -231,7 +269,7 @@ CMD /C "exit /B 0"
 GOTO exit
 
 :error
-TITLE SIF-basis: %RUNSCRIPTNAME%
+TITLE SIF-basis: Error for '%RUNSCRIPTNAME%' in '%DISPLAYNAME%' ^^!
 ECHO:
 IF DEFINED CURRENTSCRIPTRELPATH (
   SET MSG=%INDENTATION%AN ERROR HAS OCCURRED IN '!CURRENTSCRIPTRELPATH!\!CURRENTSCRIPTNAME!.bat'

@@ -1,16 +1,16 @@
 @ECHO OFF
-REM *************************************************
-REM * SIF-basis (Sweco)                             *
-REM * Version 1.1.1 November 2021                   *
-REM *                                               *
-REM * IDFmath.bat                                   *
-REM * DESCRIPTION                                   *
-REM *   Performs a single IDFmath operation for     *
-REM *   multiple IDF-files and/or constant values   * 
-REM * AUTHOR(S): Koen van der Hauw (Sweco)          *
-REM * MODIFICATIONS                                 *
-REM *   2017-09-14 Initial version                  *
-REM *************************************************
+REM ***********************************************
+REM * SIF-basis v2.1.0 (Sweco)                    *
+REM *                                             *
+REM * IDFmath.bat                                 *
+REM * DESCRIPTION                                 *
+REM *   Performs a single IDFmath operation for   *
+REM *   multiple IDF-files and/or constant values *
+REM * AUTHOR(S): Koen van der Hauw (Sweco)        *
+REM * VERSION: 2.0.0                              *
+REM * MODIFICATIONS                               *
+REM *   2017-09-14 Initial version                *
+REM ***********************************************
 CALL :Initialization
 
 REM ********************

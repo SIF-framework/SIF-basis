@@ -1,13 +1,13 @@
 @ECHO OFF
 REM ***************************************************
-REM * SIF-basis (Sweco)                               *
-REM * Version 1.1.1 November 2021                     *
+REM * SIF-basis v2.1.0 (Sweco)                        *
 REM *                                                 *
 REM * IDFbnd.bat                                      *
-REM * DESCRIPTION                                     * 
+REM * DESCRIPTION                                     *
 REM *   Sets BND-values in BND-files at modelboundary *
 REM *   and corrects BND-files for NoData SHD-values. *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)            *
+REM * VERSION: 2.0.0                                  *
 REM * MODIFICATIONS                                   *
 REM *   2016-08-01 Initial version                    *
 REM ***************************************************
@@ -29,7 +29,6 @@ REM RESULTPATH:      Path where the scriptresults should be stored
 REM METADATA_SOURCE: Metadata source path or organization, or leave empty. Note: the directory with this script is added automatically to a metadata file
 SET SOURCEBNDPATH=input
 SET SOURCEBNDFILTER=*.IDF
-SET SOURCESHDFILTER=
 SET EXTENT=%MODELEXTENT%
 SET RESULTPATH=result
 SET METADATA_SOURCE=

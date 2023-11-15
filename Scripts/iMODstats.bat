@@ -1,35 +1,41 @@
 @ECHO OFF
-REM ******************************************
-REM * SIF-basis v2.1.0 (Sweco)               *
-REM *                                        *
-REM * ASC2IDF.bat                            *
-REM * DESCRIPTION                            *
-REM *   converts ASC-files to IDF            *
-REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
-REM * MODIFICATIONS                          *
-REM *   2020-02-12 Initial version           *
-REM ******************************************
+REM ***********************************************
+REM * SIF-basis v2.1.0 (Sweco)                    *
+REM *                                             *
+REM * iMODstats.bat                               *
+REM * DESCRIPTION                                 * 
+REM *   Calculates statistics for IDF-file(s) and *
+REM *   specified extent                          *
+REM * AUTHOR(S): Koen van der Hauw (Sweco)        *
+REM * VERSION: 2.0.0                              *
+REM * MODIFICATIONS                               *
+REM *   2017-08-20 Initial version                *
+REM ***********************************************
 CALL :Initialization
-IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
 
 REM ********************
 REM * Script variables *
 REM ********************
-REM SOURCEPATH: Path to ASC-files
-REM ASCFILTER:  Filter for ASC-files, e.g. *.ASC
-REM RESULTPATH: Path to subdirectory where scriptresults are stored
-SET SOURCEPATH=%ROOTPATH%\..\..\Gegevens\Basisdata
-SET ASCFILTER=*.ASC
-SET RESULTPATH=tmp
+REM SOURCEIDFPATH:  Path with input iMOD IDF-files to calculate statistics for
+REM FILTER:         Filter for input IDF-file, wildcards are allowed
+REM EXTENT:         Extent (xll,yll,urx,ury), or leave empty to use file extent
+REM ISOVERWRITE:    Specify (with value 1) if an existing outputfile should be overwritten or that results should be added to it, or leave empty otherwise
+REM RESULTPATH:          Result path
+REM RESULTEXCELFILENAME: Result Excel filename
+SET SOURCEIDFPATH=%DBASEPATH%\ORG\KHV\100
+SET FILTER=*.IDF
+SET EXTENT=
+SET ISOVERWRITE=1
+SET RESULTPATH=result
+SET RESULTEXCELFILENAME=iMODstats KHV_L1-19.xlsx
 
 REM *********************
 REM * Derived variables *
 REM *********************
+SET TEMPDIR=tmp
 SET SCRIPTNAME=%~n0
 SET LOGFILE="%SCRIPTNAME%.log"
-SET INIFILE="%SCRIPTNAME%.INI"
-SET IMODEXE=%IMODEXE%
+SET IMODSTATSEXE=%TOOLSPATH%\iMODstats.exe
 
 REM *******************
 REM * Script commands *
@@ -39,44 +45,24 @@ SETLOCAL EnableDelayedExpansion
 TITLE SIF-basis: %SCRIPTNAME%
 
 REM Check that the specified paths exist
-IF NOT EXIST "%SOURCEPATH%" (
-   ECHO The specified SOURCEPATH does not exist: %SOURCEPATH%
-   ECHO The specified SOURCEPATH does not exist: %SOURCEPATH% > %LOGFILE%
+IF NOT EXIST "%SOURCEIDFPATH%" (
+   ECHO The specified SOURCEIDFPATH does not exist: %SOURCEIDFPATH%
+   ECHO The specified SOURCEIDFPATH does not exist: %SOURCEIDFPATH% > %LOGFILE%
    GOTO error
 )
 
-REM Create empty result directory
-IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
-IF ERRORLEVEL 1 GOTO error
-
-REM Log settings
 SET MSG=Starting %SCRIPTNAME% ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
-ECHO   SOURCEPATH=%SOURCEPATH%
-ECHO   SOURCEPATH=%SOURCEPATH% >> %LOGFILE%
-ECHO   ASCFILTER=%ASCFILTER%
-ECHO   ASCFILTER=%ASCFILTER% >> %LOGFILE%
+ECHO:
 
-SET MSG=Starting ASC-file conversion...
-ECHO %MSG%
-ECHO %MSG% >> %LOGFILE%
-
-ECHO FUNCTION=CREATEIDF > %INIFILE%
-ECHO SOURCEDIR="%SOURCEPATH%\%ASCFILTER%" >> %INIFILE%
-ECHO "%IMODEXE%" %INIFILE% >> %LOGFILE%
-"%IMODEXE%" %INIFILE% >> %LOGFILE%
+SET EXTENTOPTION=
+SET OVERWRITEOPTION=
+IF DEFINED EXTENT SET EXTENTOPTION=/e:%EXTENT% 
+IF "%ISOVERWRITE%"=="1" SET OVERWRITEOPTION=/o
+ECHO "%IMODSTATSEXE%" %OVERWRITEOPTION% %EXTENTOPTION% "%SOURCEIDFPATH%" "%FILTER%" "%RESULTPATH%\%RESULTEXCELFILENAME%" >> %LOGFILE% 
+"%IMODSTATSEXE%" %OVERWRITEOPTION% %EXTENTOPTION% "%SOURCEIDFPATH%" "%FILTER%" "%RESULTPATH%\%RESULTEXCELFILENAME%" >> %LOGFILE% 
 IF ERRORLEVEL 1 GOTO error
-IF EXIST %INIFILE% DEL %INIFILE%
-IF EXIST "tmp\*_dir_imod.bat" DEL /F /Q "tmp\*_dir_imod.bat"
-IF EXIST "tmp\*_dir_imod.txt" DEL /F /Q "tmp\*_dir_imod.txt"
-REM IF EXIST TMP RMDIR TMP >NUL 2>&1
-
-IF NOT "%RESULTPATH%" == "%SOURCEPATH%" (
-  ECHO MOVE /Y "%SOURCEPATH%\%ASCFILTER:.ASC=.IDF%" "%RESULTPATH%" >> %LOGFILE%
-  MOVE /Y "%SOURCEPATH%\%ASCFILTER:.ASC=.IDF%" "%RESULTPATH%" >> %LOGFILE% 2>&1
-  IF ERRORLEVEL 1 GOTO error
-)
 
 :success
 SET MSG=Script finished, see "%~n0.log"

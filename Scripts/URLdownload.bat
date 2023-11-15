@@ -2,34 +2,33 @@
 REM ******************************************
 REM * SIF-basis v2.1.0 (Sweco)               *
 REM *                                        *
-REM * ASC2IDF.bat                            *
-REM * DESCRIPTION                            *
-REM *   converts ASC-files to IDF            *
+REM * URLdownload.bat                        *
+REM * DESCRIPTION                            * 
+REM *   Downloads file(s) via URL            *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
 REM * VERSION: 2.0.0                         *
 REM * MODIFICATIONS                          *
-REM *   2020-02-12 Initial version           *
+REM *   2022-05-17 Initial version           *
 REM ******************************************
 CALL :Initialization
-IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
 
 REM ********************
 REM * Script variables *
 REM ********************
-REM SOURCEPATH: Path to ASC-files
-REM ASCFILTER:  Filter for ASC-files, e.g. *.ASC
-REM RESULTPATH: Path to subdirectory where scriptresults are stored
-SET SOURCEPATH=%ROOTPATH%\..\..\Gegevens\Basisdata
-SET ASCFILTER=*.ASC
-SET RESULTPATH=tmp
+REM URL:           URL for file that is downloaded, or corresponding columnname/number in URL-listfile
+REM CREDENTIALS:   Accountname, password (and optional domain) (comma-seperated) that are used as credentials. Or leave empty to ignore.
+REM RESULTFILE:    Path and filename that downloaded file is saved to, or corresponding columnname/number in URL-listfile, or path which is used together with the URL-filename.
+REM SECPROTOCOL:   Security protocol: SSL, TLS, or leave empty to ignore
+SET URL=https://ns_hwh.fundaments.nl/hwh-ahn/AHN3/DTM_5m/M5_52GZ1.zip
+SET CREDENTIALS=
+SET RESULTFILE=result
+SET SECPROTOCOL=TLS
 
 REM *********************
 REM * Derived variables *
 REM *********************
 SET SCRIPTNAME=%~n0
 SET LOGFILE="%SCRIPTNAME%.log"
-SET INIFILE="%SCRIPTNAME%.INI"
-SET IMODEXE=%IMODEXE%
 
 REM *******************
 REM * Script commands *
@@ -38,45 +37,20 @@ SETLOCAL EnableDelayedExpansion
 
 TITLE SIF-basis: %SCRIPTNAME%
 
-REM Check that the specified paths exist
-IF NOT EXIST "%SOURCEPATH%" (
-   ECHO The specified SOURCEPATH does not exist: %SOURCEPATH%
-   ECHO The specified SOURCEPATH does not exist: %SOURCEPATH% > %LOGFILE%
-   GOTO error
-)
-
-REM Create empty result directory
-IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
-IF ERRORLEVEL 1 GOTO error
-
-REM Log settings
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
-ECHO   SOURCEPATH=%SOURCEPATH%
-ECHO   SOURCEPATH=%SOURCEPATH% >> %LOGFILE%
-ECHO   ASCFILTER=%ASCFILTER%
-ECHO   ASCFILTER=%ASCFILTER% >> %LOGFILE%
 
-SET MSG=Starting ASC-file conversion...
-ECHO %MSG%
-ECHO %MSG% >> %LOGFILE%
-
-ECHO FUNCTION=CREATEIDF > %INIFILE%
-ECHO SOURCEDIR="%SOURCEPATH%\%ASCFILTER%" >> %INIFILE%
-ECHO "%IMODEXE%" %INIFILE% >> %LOGFILE%
-"%IMODEXE%" %INIFILE% >> %LOGFILE%
+SET COPTION=
+SET SPOPTION=
+IF DEFINED CREDENTIALS SET COPTION=/c:"%CREDENTIALS%"
+IF DEFINED SECPROTOCOL SET SPOPTION=/sp:%SECPROTOCOL%
+ECHO "%TOOLSPATH%\URLdownload.exe" %COPTION% %SPOPTION% "%URL%" "%RESULTFILE%" >> %LOGFILE%
+"%TOOLSPATH%\URLdownload.exe" %COPTION% %SPOPTION% "%URL%" "%RESULTFILE%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
-IF EXIST %INIFILE% DEL %INIFILE%
-IF EXIST "tmp\*_dir_imod.bat" DEL /F /Q "tmp\*_dir_imod.bat"
-IF EXIST "tmp\*_dir_imod.txt" DEL /F /Q "tmp\*_dir_imod.txt"
-REM IF EXIST TMP RMDIR TMP >NUL 2>&1
 
-IF NOT "%RESULTPATH%" == "%SOURCEPATH%" (
-  ECHO MOVE /Y "%SOURCEPATH%\%ASCFILTER:.ASC=.IDF%" "%RESULTPATH%" >> %LOGFILE%
-  MOVE /Y "%SOURCEPATH%\%ASCFILTER:.ASC=.IDF%" "%RESULTPATH%" >> %LOGFILE% 2>&1
-  IF ERRORLEVEL 1 GOTO error
-)
+ECHO: 
+ECHO: >> %LOGFILE%
 
 :success
 SET MSG=Script finished, see "%~n0.log"

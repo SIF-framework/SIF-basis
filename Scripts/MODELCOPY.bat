@@ -1,16 +1,16 @@
 @ECHO OFF
-REM **********************************************
-REM * SIF-basis (Sweco)                          *
-REM * Version 1.1.0 December 2020                *
-REM *                                            *
-REM * MODELCOPY.bat                              *
-REM * DESCRIPTION                                * 
-REM *   Runs iMOD-batchfuntion MODELCOPY         *
-REM *   and copies modelinput from RUN-file      *
-REM * AUTHOR(S): Koen van der Hauw (Sweco)       *
-REM * MODIFICATIONS                              *
-REM *   2018-10-10 Initial version               *
-REM **********************************************
+REM ******************************************
+REM * SIF-basis v2.1.0 (Sweco)               *
+REM *                                        *
+REM * MODELCOPY.bat                          *
+REM * DESCRIPTION                            *
+REM *   Runs iMOD-batchfuntion MODELCOPY     *
+REM *   and copies modelinput from RUN-file  *
+REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
+REM * VERSION: 2.0.0                         *
+REM * MODIFICATIONS                          *
+REM *   2018-10-10 Initial version           *
+REM ******************************************
 CALL :Initialization
 IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
 

@@ -2,34 +2,36 @@
 REM ******************************************
 REM * SIF-basis v2.1.0 (Sweco)               *
 REM *                                        *
-REM * ASC2IDF.bat                            *
+REM * IPFsplit.bat                           *
 REM * DESCRIPTION                            *
-REM *   converts ASC-files to IDF            *
+REM *   Splits IPF-files based on values in  *
+REM *   specified column                     *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
 REM * VERSION: 2.0.0                         *
 REM * MODIFICATIONS                          *
-REM *   2020-02-12 Initial version           *
+REM *   2018-09-01 Initial version           *
 REM ******************************************
 CALL :Initialization
-IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
 
 REM ********************
 REM * Script variables *
 REM ********************
-REM SOURCEPATH: Path to ASC-files
-REM ASCFILTER:  Filter for ASC-files, e.g. *.ASC
-REM RESULTPATH: Path to subdirectory where scriptresults are stored
-SET SOURCEPATH=%ROOTPATH%\..\..\Gegevens\Basisdata
-SET ASCFILTER=*.ASC
-SET RESULTPATH=tmp
+REM IPFPATH:     Path to input IPF-files
+REM IPFFILTER:   Filter, with use of wildcards, for filenames of input IPF-files, or a single filename
+REM SPLITCOLIDX: Column name or index (one based) to split IPF-files on
+REM SPLITPREFIX: Prefix for outputfilename before splitvalue. Before this prefix an underscore is added by the tool
+REM RESULTPATH:  Specify result path
+SET IPFPATH=result
+SET IPFFILTER=ZTP_WINFILTERS.IPF
+SET SPLITCOLIDX=8
+SET SPLITPREFIX=L
+SET RESULTPATH=result
 
 REM *********************
 REM * Derived variables *
 REM *********************
 SET SCRIPTNAME=%~n0
 SET LOGFILE="%SCRIPTNAME%.log"
-SET INIFILE="%SCRIPTNAME%.INI"
-SET IMODEXE=%IMODEXE%
 
 REM *******************
 REM * Script commands *
@@ -38,45 +40,26 @@ SETLOCAL EnableDelayedExpansion
 
 TITLE SIF-basis: %SCRIPTNAME%
 
-REM Check that the specified paths exist
-IF NOT EXIST "%SOURCEPATH%" (
-   ECHO The specified SOURCEPATH does not exist: %SOURCEPATH%
-   ECHO The specified SOURCEPATH does not exist: %SOURCEPATH% > %LOGFILE%
-   GOTO error
-)
-
-REM Create empty result directory
 IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
-IF ERRORLEVEL 1 GOTO error
 
-REM Log settings
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Running IPFsplit
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
-ECHO   SOURCEPATH=%SOURCEPATH%
-ECHO   SOURCEPATH=%SOURCEPATH% >> %LOGFILE%
-ECHO   ASCFILTER=%ASCFILTER%
-ECHO   ASCFILTER=%ASCFILTER% >> %LOGFILE%
 
-SET MSG=Starting ASC-file conversion...
-ECHO %MSG%
-ECHO %MSG% >> %LOGFILE%
+SET PREFIXOPTION=
+IF DEFINED SPLITPREFIX SET PREFIXOPTION=/p:"%SPLITPREFIX%"
 
-ECHO FUNCTION=CREATEIDF > %INIFILE%
-ECHO SOURCEDIR="%SOURCEPATH%\%ASCFILTER%" >> %INIFILE%
-ECHO "%IMODEXE%" %INIFILE% >> %LOGFILE%
-"%IMODEXE%" %INIFILE% >> %LOGFILE%
-IF ERRORLEVEL 1 GOTO error
-IF EXIST %INIFILE% DEL %INIFILE%
-IF EXIST "tmp\*_dir_imod.bat" DEL /F /Q "tmp\*_dir_imod.bat"
-IF EXIST "tmp\*_dir_imod.txt" DEL /F /Q "tmp\*_dir_imod.txt"
-REM IF EXIST TMP RMDIR TMP >NUL 2>&1
-
-IF NOT "%RESULTPATH%" == "%SOURCEPATH%" (
-  ECHO MOVE /Y "%SOURCEPATH%\%ASCFILTER:.ASC=.IDF%" "%RESULTPATH%" >> %LOGFILE%
-  MOVE /Y "%SOURCEPATH%\%ASCFILTER:.ASC=.IDF%" "%RESULTPATH%" >> %LOGFILE% 2>&1
+FOR %%G IN ("%IPFPATH%\%IPFFILTER%") DO (
+  SET IPFFILENAME=%%~nxG
+  ECHO   splitting !IPFFILENAME! ...
+  ECHO   splitting !IPFFILENAME! ... >> %LOGFILE%
+  ECHO "IPFsplit.exe" %PREFIXOPTION% "%IPFPATH%" "!IPFFILENAME!" %SPLITCOLIDX% "%RESULTPATH%"  >> %LOGFILE%
+  "%TOOLSPATH%\IPFsplit.exe" %PREFIXOPTION% "%IPFPATH%" "!IPFFILENAME!" %SPLITCOLIDX% "%RESULTPATH%" >> %LOGFILE%
   IF ERRORLEVEL 1 GOTO error
 )
+
+ECHO: 
+ECHO: >> %LOGFILE%
 
 :success
 SET MSG=Script finished, see "%~n0.log"
