@@ -3,7 +3,7 @@ REM ******************************************
 REM * SIF-basis v2.1.0 (Sweco)               *
 REM *                                        *
 REM * URLdownload.bat                        *
-REM * DESCRIPTION                            * 
+REM * DESCRIPTION                            *
 REM *   Downloads file(s) via URL            *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
 REM * VERSION: 2.0.0                         *
