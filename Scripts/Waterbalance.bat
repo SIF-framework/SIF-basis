@@ -8,7 +8,7 @@ REM *   Create waterbalance for BDG-files    *
 REM *   with iMOD-batchfunction WBALANCE and *
 REM *   formats results in Excelsheet.       *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2016-05-01 Initial version           *
 REM ******************************************
@@ -30,6 +30,7 @@ REM WBAL_GENFILE: GEN-file with features to calculate waterbalance(s) for (ignor
 REM WBAL_LAYERS:  Comma seperated list of layersnumbers to be included in waterbalance per zone (ignored if SKIPIMOD=1)
 REM WBAL_SYSTEMS: Comma seperated list of systems to be included in the waterbalance CSV-file for OLF, ISG, RIV and DRN-packages if corresponding BDGxxx_SYSi IDF-files exist, or leave empty to not add SYS-files
 REM IDCOLIDX:     Column index (zero-based) of the zone ID-column in the GEN-file which is specified in the CSV-file, or leave empty to use a sequence number for each zone
+REM ISMF6:        Specify (with value 1) that a MF6-model is analysed
 REM RESULTPATH:   Path where Excelfile will be written. The name of the Excelfile will be as specified by WBAL_FNAME
 SET MODELNAME=ORG_BAS
 SET WBAL_FNAME=WBALANCE_%MODELNAME% - bufferextent
@@ -38,6 +39,7 @@ SET WBAL_GENFILE=%SHAPESPATH%\MODELEXTENT.gen
 SET WBAL_LAYERS=%MODELLAYERS%
 SET WBAL_SYSTEMS=1,2,5,6
 SET IDCOLIDX=
+SET ISMF6=1
 SET RESULTPATH=result
 
 REM Specify metadata
@@ -51,7 +53,7 @@ SETLOCAL ENABLEDELAYEDEXPANSION
 SET SCRIPTNAME=%~n0
 SET LOGFILE="%SCRIPTNAME%.log"
 SET MODELPATH=%MODELNAME:_=\%
-SET INIFILE=WBALANCE_%MODELNAME%.INI
+SET INIFILE="%SCRIPTNAME%.INI"
 SET TEMPPATH=tmp
 SET THISPATH=%~dp0
 SET iMODEXE=%IMODEXE%
@@ -76,6 +78,10 @@ IF NOT "%SKIPIMOD%"=="1" (
   SET NBALTMP=!NBAL!
   IF EXIST "%RESULTSPATH%\%MODELPATH%\bdgrch" (
     SET /A NBAL=NBAL+1
+  ) ELSE (
+    IF EXIST "%RESULTSPATH%\%MODELPATH%\BDGRCH_SYS1" (
+      SET /A NBAL=NBAL+1
+    )
   )
   IF EXIST "%RESULTSPATH%\%MODELPATH%\bdgisg" (
     SET /A NBAL=NBAL+1
@@ -92,7 +98,12 @@ IF NOT "%SKIPIMOD%"=="1" (
     REM Check which BDGOLF SYS-files exist
     SET BAL5ISYS=
     FOR %%D IN (%WBAL_SYSTEMS%) DO (
-      IF EXIST "%RESULTSPATH%\%MODELPATH%\bdgolf\bdgolf_%iMODFLOW_SYSTEM_SUBSTRING%%%D_*.IDF" (
+      IF "%ISMF6%"=="1" (
+        SET BDGPATH=bdgolf_%iMODFLOW_SYSTEM_SUBSTRING%%%D
+      ) ELSE (
+        SET BDGPATH=bdgolf
+      )
+      IF EXIST "%RESULTSPATH%\%MODELPATH%\!BDGPATH!\bdgolf_%iMODFLOW_SYSTEM_SUBSTRING%%%D_*.IDF" (
         SET BAL5ISYS=!BAL5ISYS!,%%D
       )
     )
@@ -106,7 +117,12 @@ IF NOT "%SKIPIMOD%"=="1" (
     REM Check which BDGRIV SYS-files exist
     SET BAL6ISYS=
     FOR %%D IN (%WBAL_SYSTEMS%) DO (
-      IF EXIST "%RESULTSPATH%\%MODELPATH%\bdgriv\bdgriv_%iMODFLOW_SYSTEM_SUBSTRING%%%D_*.IDF" (
+      IF "%ISMF6%"=="1" (
+        SET BDGPATH=bdgriv_%iMODFLOW_SYSTEM_SUBSTRING%%%D
+      ) ELSE (
+        SET BDGPATH=bdgriv
+      )
+      IF EXIST "%RESULTSPATH%\%MODELPATH%\!BDGPATH!\bdgriv_%iMODFLOW_SYSTEM_SUBSTRING%%%D_*.IDF" (
         SET BAL6ISYS=!BAL6ISYS!,%%D
       )
     )
@@ -120,7 +136,12 @@ IF NOT "%SKIPIMOD%"=="1" (
     REM Check which BDGDRN SYS-files exist
     SET BAL7ISYS=
     FOR %%D IN (%WBAL_SYSTEMS%) DO (
-      IF EXIST "%RESULTSPATH%\%MODELPATH%\bdgdrn\bdgdrn_%iMODFLOW_SYSTEM_SUBSTRING%%%D_*.IDF" (
+      IF "%ISMF6%"=="1" (
+        SET BDGPATH=bdgdrn_%iMODFLOW_SYSTEM_SUBSTRING%%%D
+      ) ELSE (
+        SET BDGPATH=bdgdrn
+      )
+      IF EXIST "%RESULTSPATH%\%MODELPATH%\!BDGPATH!\bdgdrn_%iMODFLOW_SYSTEM_SUBSTRING%%%D_*.IDF" (
         SET BAL7ISYS=!BAL7ISYS!,%%D
       )
     )
@@ -130,9 +151,47 @@ IF NOT "%SKIPIMOD%"=="1" (
     )
   )
   ECHO BAL8=BDGWEL >> %INIFILE%
-  IF EXIST "%RESULTSPATH%\%MODELPATH%\bdgrch" (
+  IF NOT "%WBAL_SYSTEMS%"=="" (
+    REM Check which BDGDRN SYS-files exist
+    SET BAL8ISYS=
+    FOR %%D IN (%WBAL_SYSTEMS%) DO (
+      IF "%ISMF6%"=="1" (
+        SET BDGPATH=bdgwel_%iMODFLOW_SYSTEM_SUBSTRING%%%D
+      ) ELSE (
+        SET BDGPATH=bdgwel
+      )
+      IF EXIST "%RESULTSPATH%\%MODELPATH%\!BDGPATH!\bdgwel_%iMODFLOW_SYSTEM_SUBSTRING%%%D_*.IDF" (
+        SET BAL8ISYS=!BAL8ISYS!,%%D
+      )
+    )
+    IF NOT "!BAL8ISYS!"=="" (
+      SET BAL8ISYS=!BAL8ISYS:~1!
+      ECHO BAL8ISYS=!BAL8ISYS! >> %INIFILE%
+    )
+  )
+  
+  IF "%ISMF6%"=="1" (
+    SET BDGPATH=bdgrch_%iMODFLOW_SYSTEM_SUBSTRING%1
+  ) ELSE (
+    SET BDGPATH=bdgrch
+  )
+  IF EXIST "%RESULTSPATH%\%MODELPATH%\!BDGPATH!" (
     SET /A NBALTMP=NBALTMP+1
     ECHO BAL!NBALTMP!=BDGRCH >> %INIFILE%
+    FOR %%D IN (%WBAL_SYSTEMS%) DO (
+      IF "%ISMF6%"=="1" (
+        SET BDGPATH=bdgrch_%iMODFLOW_SYSTEM_SUBSTRING%%%D
+      ) ELSE (
+        SET BDGPATH=bdgrch
+      )
+      IF EXIST "%RESULTSPATH%\%MODELPATH%\!BDGPATH!\bdgrch_%iMODFLOW_SYSTEM_SUBSTRING%%%D_*.IDF" (
+        SET BAL9ISYS=!BAL9ISYS!,%%D
+      )
+    )
+    IF NOT "!BAL9ISYS!"=="" (
+      SET BAL9ISYS=!BAL9ISYS:~1!
+      ECHO BAL!NBALTMP!ISYS=!BAL9ISYS! >> %INIFILE%
+    )
   )
   IF EXIST "%RESULTSPATH%\%MODELPATH%\bdgisg" (
     SET /A NBALTMP=NBALTMP+1
@@ -141,7 +200,12 @@ IF NOT "%SKIPIMOD%"=="1" (
       REM Check which BDGISG SYS-files exist
       SET BALISYS=
       FOR %%D IN (%WBAL_SYSTEMS%) DO (
-        IF EXIST "%RESULTSPATH%\%MODELPATH%\bdgisg\bdgisg_%iMODFLOW_SYSTEM_SUBSTRING%%%D_*.IDF" (
+      IF "%ISMF6%"=="1" (
+        SET BDGPATH=bdgisg_%iMODFLOW_SYSTEM_SUBSTRING%%%D
+      ) ELSE (
+        SET BDGPATH=bdgisg
+      )
+        IF EXIST "%RESULTSPATH%\%MODELPATH%\!BDGPATH!\bdgisg_%iMODFLOW_SYSTEM_SUBSTRING%%%D_*.IDF" (
           SET BALISYS=!BALISYS!,%%D
         )
       )
@@ -187,14 +251,12 @@ IF NOT "%SKIPIMOD%"=="1" (
     ECHO !MSG! >> %LOGFILE%
     GOTO error
   )
-  ECHO "%IMODEXE%" "%INIFILE%" >> %LOGFILE%
-  "%IMODEXE%" "%INIFILE%" >> %LOGFILE%
+  ECHO "%IMODEXE%" %INIFILE% >> %LOGFILE%
+  "%IMODEXE%" %INIFILE% >> %LOGFILE%
   IF NOT EXIST "%TEMPPATH%\%WBAL_FNAME%.CSV" GOTO error
 
-  IF EXIST "%INIFILE%" DEL "%INIFILE%" 
+  REM IF EXIST %INIFILE% DEL %INIFILE%
   
-  SET WBAL_FNAME=%TEMPPATH%\%WBAL_FNAME%
-
 ) ELSE (
   ECHO Using existing CSV-file: %WBAL_FNAME%.CSV ...
   ECHO Using existing CSV-file: %WBAL_FNAME%.CSV ... >> %LOGFILE%
@@ -203,16 +265,18 @@ IF NOT "%SKIPIMOD%"=="1" (
 SET IDOPTION=
 IF NOT "%IDCOLIDX%"=="" SET IDOPTION=/i:%IDCOLIDX%
 
-SET MSG=Reformatting iMOD-BATCH CSF-file ...
+SET MSG=Reformatting iMOD-BATCH CSV-file ...
 ECHO %MSG%
 ECHO %MSG% >> %LOGFILE%
-ECHO "iMODWBalFormat.exe" %IDOPTION% "%WBAL_FNAME%.CSV" >> %LOGFILE%
-"%TOOLSPATH%\iMODWBalFormat.exe" %IDOPTION% "%WBAL_FNAME%.CSV" >> %LOGFILE%
+ECHO "iMODWBalFormat.exe" %IDOPTION% "%TEMPPATH%" "%WBAL_FNAME%.CSV" "%RESULTPATH%" >> %LOGFILE%
+"%TOOLSPATH%\iMODWBalFormat.exe" %IDOPTION% "%TEMPPATH%" "%WBAL_FNAME%.CSV" "%RESULTPATH%" >> %LOGFILE%
+
 IF ERRORLEVEL 1 GOTO error
 
 REM If resultpath is different from CSV-path move XLSX to resultpath
-IF "!WBAL_FNAME:%RESULTPATH%=!" == "!WBAL_FNAME!" (
-  IF EXIST "%WBAL_FNAME%.XLSX" MOVE /Y "%WBAL_FNAME%.XLSX" "%RESULTPATH%" >> %LOGFILE%
+SET FULL_WBAL_FNAME=%TEMPPATH%\%WBAL_FNAME%
+IF "!FULL_WBAL_FNAME:%RESULTPATH%=!" == "!FULL_WBAL_FNAME!" (
+  IF EXIST "%FULL_WBAL_FNAME%.XLSX" MOVE /Y "%FULL_WBAL_FNAME%.XLSX" "%RESULTPATH%" >> %LOGFILE%
   IF ERRORLEVEL 1 GOTO error
 )
 
@@ -298,4 +362,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE
