@@ -7,7 +7,7 @@ REM * DESCRIPTION                                       *
 REM *   Runs all batchfiles from specified subdirectory *
 REM *   Before running, first deletes existing logfiles *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)              *
-REM * VERSION: 2.0.0                                    *
+REM * VERSION: 2.1.0                                    *
 REM * MODIFICATIONS                                     *
 REM *   2017-10-25 Initial version                      *
 REM *****************************************************
@@ -24,6 +24,7 @@ REM ISSUBLOGSHOWN:  Specify (with value 1) that console messages of called lower
 REM ISSKIPSHOWN:    Specify (with value 1) that messages for skipped batchfiles should be shown, or use 0 or leave empty otherwise
 REM ISOLDLOGDEL:    Specify (with value 1) that all old logfiles in subdirectory SUBDIR should be deleted before running batchfiles
 REM PREMSG:         Specify message to show before running scripts, or leave empty to skip
+REM PRECONDFILE:    Path and filename of file that should exist to run Runscript (file precondition), or leave empty to ignore
 SET BASEPATH=
 SET SUBDIR=
 SET SKIPPEDSCRIPTS=
@@ -32,6 +33,7 @@ SET ISSUBLOGSHOWN=
 SET ISSKIPSHOWN=1
 SET ISOLDLOGDEL=1
 SET PREMSG=
+SET PRECONDFILE=
 
 REM *********************
 REM * Derived variables *
@@ -144,6 +146,12 @@ IF DEFINED PREMSG (
   ECHO: >CON
   ECHO %PREMSG% >CON
   ECHO: >CON
+
+REM Check PRECONDFILE: If file does not exist workflow is skipped
+IF DEFINED PRECONDFILE IF NOT EXIST "%PRECONDFILE%" (
+  ECHO Script '%RUNSCRIPTNAME%' is skipped because PRECONDFILE is not found: %PRECONDFILE%
+  ECHO Script '%RUNSCRIPTNAME%' is skipped because PRECONDFILE is not found: %PRECONDFILE% >> %RUNSCRIPTSLOGFILE%
+  GOTO exit
 )
 
 REM Set recursively processed variabeles, check if RECURSIVE_SKIPPEDSCRIPTSTRING has been set
