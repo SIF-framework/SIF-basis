@@ -1,0 +1,50 @@
+Workflow FlowPaths - Basis
+--------------------------
+
+Purpose
+-------
+Create zone using flowpath calculations, with specified traveltime around source as defined in an IPF-file 
+
+Description
+-----------
+1) Perform backward flowpath-run starting around source and with specified traveltime, to retrieve general area of zone
+2) Peform forward flowpath-run starting from a buffer around backwards zone
+3) Select flowlines and points that end in or pass the specified source
+4) Create IDF-file from all starting points that end in or pass the specified source and a traveltime less than or equal to the specified traveltime
+5) Create a boundary hull for the zone in the IDF-file. The resulting IDF-file will have a cellsize as specified by variabele FPFW_ISDP_N1
+Optionally, the results can be converted to ASC-grids and shapefiles and metadata is added automatically based on specified settings.
+
+Workflow batchfiles
+-------------------
+00 Settings:                            Define workflow settings
+01 Cleanup:                             Cleanup old results
+02a IPFselect source:                   Select specified points (source) from IPF-file
+02b IPF2GEN source BW:                  Create rectangle around source for starting points of backward FlowPath-run
+03a ISDcreate BW:                       Create starting points for IMODPATH for backward FlowPath-run
+03b IMODPATH BW:                        Start backward FlowPath-run with IMODPATH and specified settings
+04a IPF2GEN CHULL BW:                   Create convex hull around endpoints of backward flowpath run
+04b GENbuffer CHULL BW:                 Create buffer around convex hull
+05a ISDcreate CHULL-buf FW - points:    Create starting points for IMODPATH for forward FlowPath-run for IPF-points
+05b IMODPATH CHULL-buf FW - points:     Start forward FlowPath-run with IMODPATH for IPF-points
+05c ISDcreate CHULL-buf FW - flowlines: Create starting points for IMODPATH for forward FlowPath-run for IFF-lines
+05d IMODPATH CHULL-buf FW - flowlines:  Start forward FlowPath-run with IMODPATH for IFF-lines
+06a IPF2GEN source FW:                  Create rectangle around source for retrieving endpoints of forward FlowPath-run
+06b IPFselect CHULL-buf FW:             Select endpoints of forward FlowPath-run that end in or pass through source and have specified traveltime
+06c IFFselect CHULL-buf FW:             Select flowlines of forward FlowPath-run that end in or pass through source and have specified traveltime
+07a XYZ2IDF zonegrid:                   Convert selected IPF-points of forward FlowPath-run to IDF-file with resulting XXXj-zone
+07b IDF2GEN zonegrid:                   Convert IDF-file with resulting XXXj-zone to GEN-file with bounding hull around non-NoData cells
+08a IDF2ASC zonegrid:                   Convert IDF-file with resulting XXXj-zone to ASC-file that can be read in GIS-application
+08b GEN2SHP BHULL:                      Convert GEN-file with hull around XXXj-zone to shapefile that can be read in GIS-application
+08c IFF2SHP flowlines:                  Convert IFF-file with flowlines of XXXj-zone to shapefile that can be read in GIS-application
+09 SetMetadata GIS zonegrid:            Create XML-file with GIS-metadata for ASC-file with resulting XXXj-zone
+99 Cleanup IMODPATH-runs:               Cleanup temporary files and zip/remove large IPF/IFF-files of flowpath runs
+
+Remarks
+-------
+Optionally use SIF FlowPath-legends as present in iMOD LEGEND-folder.
+In case of unexpected results, check FlowPath-settings ISNK, FRACTION, traveltimes and volumes for selection. Check iMOD-version and check intermediate results in iMOD.
+
+Version
+-------
+Version: 2.0.0
+Author:  Sweco, 15-02-2021
