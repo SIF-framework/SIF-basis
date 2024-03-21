@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Runs iMOD-batchfunction IDFSCALE for *
 REM *   one or more IDF-files.               *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.0.2                         *
 REM * MODIFICATIONS                          *
 REM *   2017-06-20 Initial version           *
 REM ******************************************
@@ -65,7 +65,7 @@ SETLOCAL EnableDelayedExpansion
 
 TITLE SIF-basis: %SCRIPTNAME%
 
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
@@ -150,12 +150,16 @@ IF "%ISRECURSIVE%"=="1" (
             SET MSGPOSTFIX=(with cellsize %SCALESIZE%, but different extent^) 
 
             REM Compare extents
-            ECHO   CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "%WINDOW%" >> %LOGFILE%
-            CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "%WINDOW%"
-            IF ERRORLEVEL 1 GOTO error
-            IF "!ISEQUALEXTENT!"=="1" (
+            IF DEFINED WINDOW (
+              ECHO   CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "%WINDOW%" >> %LOGFILE%
+              CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "%WINDOW%"
+              IF ERRORLEVEL 1 GOTO error
+              IF "!ISEQUALEXTENT!"=="1" (
+                SET ISIDFCOPIED=1
+                SET MSGPOSTFIX=(with cellsize %SCALESIZE% and equal extent^) 
+              ) 
+            ) ELSE (
               SET ISIDFCOPIED=1
-              SET MSGPOSTFIX=(with cellsize %SCALESIZE% and equal extent^) 
             )
           )
         )
@@ -245,6 +249,7 @@ IF "%ISRECURSIVE%"=="1" (
         SET TARGETSUBPATH=!TARGETSUBPATH:~1!
         SET TARGETPATH=!FILEPATH:%SOURCEPATH%=%RESULTPATH%!
         SET TARGETPATH=!TARGETPATH:~0,-1!
+        IF NOT EXIST "!TARGETPATH!" MKDIR "!TARGETPATH!"
         ECHO   Copying !TARGETSUBPATH!!FILENAME! ...
         ECHO   Copying !TARGETSUBPATH!!FILENAME! ... >> %LOGFILE%
         ECHO COPY /Y "!FULLFILENAME!" "!TARGETPATH!" >> %LOGFILE%
@@ -381,6 +386,7 @@ IF "%ISRECURSIVE%"=="1" (
         SET TARGETSUBPATH=!TARGETSUBPATH:~1!
         SET TARGETPATH=!FILEPATH:%SOURCEPATH%=%RESULTPATH%!
         SET TARGETPATH=!TARGETPATH:~0,-1!
+        IF NOT EXIST "!TARGETPATH!" MKDIR "!TARGETPATH!"
         ECHO   Copying !TARGETSUBPATH!!FILENAME! ...
         ECHO   Copying !TARGETSUBPATH!!FILENAME! ... >> %LOGFILE%
         ECHO COPY /Y "!FULLFILENAME!" "!TARGETPATH!" >> %LOGFILE%
@@ -513,4 +519,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE
