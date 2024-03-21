@@ -2,12 +2,12 @@
 REM *********************************************
 REM * SIF-basis v2.1.0 (Sweco)                  *
 REM *                                           *
-REM * XCopyToDBASE.bat                          *
+REM * XCopyFiles.bat                            *
 REM * DESCRIPTION                               *
-REM *   Copies complete structures of files and *
-REM *   subdirs to specified DBASE modelpath    *
+REM *   Copy complete directory structure with  *
+REM *   files and subdirs to specified path     *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)      *
-REM * VERSION: 2.0.0                            *
+REM * VERSION: 2.0.2                            *
 REM * MODIFICATIONS                             *
 REM *   2018-09-12 Initial version              *
 REM *********************************************
@@ -19,15 +19,15 @@ REM ********************
 REM SOURCEPATH:      Name of subdirectory where (script)results were stored that should be copied to DBASE-subdirectory
 REM TARGETPATH:      Targetpath excluding "MODELREF1[\MODELREF2[\MODELSUBDIR]]", or leave empty to use %DBASEPATH% as target
 REM MODELNAME:       Full model version string as MODELREF1[_MODELREF2[_MODELREF3]]), which is added to TARGETPATH, or leave empty to place SOURCEPATH directly under TARGETPATH
-REM MODELSUBDIR:     Specify subdirectory name where files should be copied to (may be left empty). This could be the package directory name if PACKAGEDIRS is used to specify one or more other sublevels.
-REM ISTARGETCLEANED: Use 1 if complete targetpath DBASE\MODELREF1[\MODELREF2[\MODELSUBDIR]] should be deleted before copy (1=delete contents including subdirectories, 0=do not delete contents)
+REM MODELSUBDIR:     If MODELNAME is defined, optionally specify subdirectory name where files should be copied to (may be left empty), e.g. name of a package
+REM ISTARGETCLEANED: Use 1 if complete targetpath TARGETPATH[\MODELREF1[\MODELREF2[\MODELSUBDIR]]] should be deleted before copy (1=delete contents including subdirectories, 0=do not delete contents)
 REM ISMOVED:         Use 1 if files should be moved instead of copied (1=move, empty/non-1=copy). When moving ensure contents to do not exist in targetpath
 SET SOURCEPATH=result\BASIS1
 SET TARGETPATH=
 SET MODELNAME=ORG-test
 SET MODELSUBDIR=
-SET ISMOVED=1
 SET ISTARGETCLEANED=0
+SET ISMOVED=1
 
 REM *********************
 REM * Derived variables *
@@ -197,4 +197,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

@@ -4,18 +4,18 @@ REM * SIF-basis v2.1.0 (Sweco)                                 *
 REM *                                                          *
 REM * iMODValidator validation.bat                             *
 REM * DESCRIPTION                                              *
-REM *   Runs iMODValidator modelvalidation for a RUN-file.     *
+REM *   Runs iMODValidator modelvalidation for a RUN/PRJ-file. *
 REM *   iMOD/Excel may be opened automically after validation. *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)                     *
-REM * VERSION: 2.0.0                                           *
+REM * VERSION: 2.2.0                                           *
 REM * MODIFICATIONS                                            *
-REM *   2017-08-01 Initial version                             *
+REM *   2016-10-01 Initial version                             *
 REM ************************************************************
 CALL :Initialization
-IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
-IF EXIST "%SETTINGSPATH%\SIF.Settings.Maps.bat" CALL "%SETTINGSPATH%\SIF.Settings.Maps.bat"
-IF EXIST "%SETTINGSPATH%\SIF.Settings.Model.bat" CALL "%SETTINGSPATH%\SIF.Settings.Model.bat"
-IF EXIST "%SETTINGSPATH%\SIF.Settings.ModelRuns.bat" CALL "%SETTINGSPATH%\SIF.Settings.ModelRuns.bat"
+CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
+CALL "%SETTINGSPATH%\SIF.Settings.Maps.bat"
+CALL "%SETTINGSPATH%\SIF.Settings.Model.bat"
+CALL "%SETTINGSPATH%\SIF.Settings.ModelRuns.bat"
 
 REM ********************
 REM * Script variables *
@@ -25,7 +25,7 @@ REM MODELPATH:    Path to base modelrunfile, relative path from RUNFILES-folder 
 REM RUNFILEPATH:  Full path and filename to RUN-file if MODELNAME is not used. MODELPATH is ignored then.
 REM RESULTPATH:   Path to write results to, e.g. %WORKOUTPATH%\%MODELNAME:_=\%\validation\iMODValidator
 REM SETTINGSFILE: Path to iMODValidator XML-settingsfile, or leave empty to use default settings
-SET MODELNAME=
+SET MODELNAME=ORG_BAS
 SET MODELPATH=
 SET RUNFILEPATH=
 SET RESULTPATH=checks\iMODValidator
@@ -69,7 +69,7 @@ IF NOT DEFINED RUNFILEPATH (
 SET SETTINGSOPTION=
 IF NOT "%SETTINGSFILE%" == "" SET SETTINGSOPTION=/s:"%SETTINGSFILE%"
 
-IF DEFINED MODELNAME (
+IF DEFINED RUNFILEPATH (
   IF NOT EXIST "%RUNFILEPATH%" (
     SET MSG=Specified RUN-file not found: %RUNFILEPATH%
     ECHO !MSG!
@@ -128,8 +128,8 @@ GOTO exit
 :error
 ECHO:
 SET MSG=AN ERROR HAS OCCURRED^^! Check logfile "%~n0.log"
-ECHO !MSG!
-ECHO !MSG! >> %LOGFILE%
+ECHO %MSG%
+ECHO %MSG% >> %LOGFILE%
 REM Set errorlevel for higher level scripts
 CMD /C "EXIT /B 1"
 GOTO exit
@@ -197,4 +197,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE
