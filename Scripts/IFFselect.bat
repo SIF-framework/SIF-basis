@@ -14,8 +14,6 @@ REM *   2024-01-12 Cleanup, move to SIF-basis *
 REM *******************************************
 CALL :Initialization
 
-SET TOOLSPATH=C:\Data\Tools\SwecoTools\SIF-tools\IFFselect\Bin
-
 REM ********************
 REM * Description      *
 REM ********************
