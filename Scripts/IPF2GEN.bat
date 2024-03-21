@@ -1,12 +1,12 @@
 @ECHO OFF
 REM ******************************************
-REM * SIF-basis v2.1.0 (Sweco)               *
+REM * SIF-basis v2.2.0 (Sweco)               *
 REM *                                        *
 REM * IPF2GEN.bat                            *
 REM * DESCRIPTION                            *
 REM *   Converts IPF-GEN or GEN-IPF          *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.1.0                         *
 REM * MODIFICATIONS                          *
 REM *   2017-05-01 Initial version           *
 REM ******************************************
@@ -15,16 +15,27 @@ CALL :Initialization
 REM ********************
 REM * Script variables *
 REM ********************
-REM IPFPATH:    Input path for IPF-files 
-REM IPFFILTER:  Filter for IPF-files (use wildcards or a complete filename)
-REM METHOD:     Method for conversion, 1: each point is converted to a rectangle; 2: all points are used to create a convex hull
-REM               For method 1: RECTANGLESIZE:   size of rectangles around IPF-points
-REM RESULTPATH: Result path for GEN-files
+REM IPFPATH:       Input path for IPF-files 
+REM IPFFILTER:     Filter for IPF-files (use wildcards or a complete filename)
+REM X/YCOLNR:      Specify X and Y-column numbers (one-based), or leave empty to use default of 1 and 2
+REM CONVERTMETHOD: Method for conversion, 1: each point is converted to a rectangle; 2: all points are used to create a convex hull
+REM RECTANGLESIZE:   For conversion method 1 define: size of rectangles around IPF-points; otherwise leave empty
+REM SNAPMETHOD:    Optional method for snapping input XY-coordinates to cells; 1: snaps to edge of cells, 2: snaps to center of cells, or leave empty to skip snapping
+REM SNAPSIZE:        Size of cells that is snapped to (if SNAPMETHOD is defined, otherwise leave empty)
+REM EXTENT:        Extent (xll,yll,xur,yur) to clip input/ouput IPF-files, or leave empty
+REM RESULTPATH:    Path for resulting GEN-files
+REM POSTFIX:       Postfix for converted GEN-files (or leave empty)
 SET IPFPATH=input
 SET IPFFILTER=*.IPF
-SET METHOD=1
+SET XCOLNR=
+SET YCOLNR=
+SET CONVERTMETHOD=1
 SET RECTANGLESIZE=100
+SET SNAPMETHOD=1
+SET SNAPSIZE=25
+SET EXTENT=
 SET RESULTPATH=result
+SET POSTFIX=
 
 REM *********************
 REM * Derived variables *
@@ -39,27 +50,42 @@ SETLOCAL EnableDelayedExpansion
 
 TITLE SIF-basis: %SCRIPTNAME%
 
-ECHO Started script '%SCRIPTNAME%'...
-ECHO Started script '%SCRIPTNAME%'... > %LOGFILE%
-ECHO:
-ECHO: >> %LOGFILE%
+SET MSG=Starting script '%SCRIPTNAME%' ...
+ECHO %MSG%
+ECHO %MSG% > %LOGFILE%
 
-IF "%METHOD%"=="1" (
-  SET METHODOPTION=/m:1,%RECTANGLESIZE%
+SET OPTIONM=
+SET OPTIONS=
+SET OPTIONY=
+SET OPTIONE=
+SET OPTIONP=
+IF "%CONVERTMETHOD%"=="1" (
+  SET OPTIONM=/m:1,%RECTANGLESIZE%
 ) ELSE (
-  IF "%METHOD%"=="2" (
-    SET METHODOPTION=/m:2
+  IF "%CONVERTMETHOD%"=="2" (
+    SET OPTIONM=/m:2
   ) ELSE (
-    ECHO Invalid method value, use 1, 2 or 3: %METHOD%
+    ECHO Invalid method value for conversion, use 1, 2 or 3: %CONVERTMETHOD%
     GOTO error
   )
 )
+IF DEFINED XCOLNR (
+  IF DEFINED YCOLNR (
+    SET OPTIONY=/y:%XCOLNR%,%YCOLNR%
+  ) ELSE (
+    ECHO YCOLNR should also be defined if XCOLNR is defined
+    GOTO error
+  )
+)
+IF DEFINED SNAPMETHOD SET OPTIONS=/s:%SNAPMETHOD%,%SNAPSIZE%
+IF DEFINED EXTENT SET OPTIONE=/e:%EXTENT%
+IF DEFINED POSTFIX SET OPTIONP=/p:%POSTFIX%
 
 SET MSG=Converting IPF-file(s^) to GEN-file(s^) ...
-ECHO %MSG%
+ECHO   %MSG%
 ECHO %MSG% >> %LOGFILE%
-ECHO "IPFGENconvert.exe" %METHODOPTION% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" >> %LOGFILE%
-"%TOOLSPATH%\IPFGENconvert.exe" %METHODOPTION% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" >> %LOGFILE%
+ECHO "%TOOLSPATH%\IPFGENconvert.exe" %OPTIONM% %OPTIONS% %OPTIONY% %OPTIONE% %OPTIONP% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" >> %LOGFILE%
+"%TOOLSPATH%\IPFGENconvert.exe" %OPTIONM% %OPTIONS% %OPTIONY% %OPTIONE% %OPTIONP% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 
 ECHO: 
@@ -145,4 +171,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE
