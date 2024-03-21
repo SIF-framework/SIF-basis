@@ -4,33 +4,36 @@ REM * SIF-basis v2.2.0 (Sweco)                *
 REM *                                         *
 REM * ISDcreate.bat                           *
 REM * DESCRIPTION                             *
-REM *   Creates iMODPATH startpoints ISD-file *
+REM *   Creates ISD-file for IMODPATH         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)    *
 REM * VERSION: 2.0.0                          *
 REM * MODIFICATIONS                           *
 REM *   2018-08-27 Initial version            *
+REM *   2024-01-12 Cleanup, move to SIF-basis *
 REM *******************************************
 CALL :Initialization
 
 REM ********************
 REM * Script variables *
 REM ********************
-REM IMODFILE:   IPF- or GEN-file for shape points/features
-REM N1:         Shape number 1, an integer or float (english notation). For points: radius of circle around point, for polygons: distance X between points in the polygon, for lines: distance between points along the line
-REM N2:         Shape number 2, an integer or float (english notation). For points: dinstance between points on the circle, for polygons: distance Y between points in the polygon, for lines: not used, use any number e.g. 0 
-REM TOP:        TOP-level as an IDF-file, numeric value or columnname in shpFile for TOP-level
-REM BOT:        BOT-level as an IDF-file, numeric value or columnname in shpFile for BOT-level
+REM SRCPATH:    Path to source IPF- or GEN-file(s) 
+REM SRCFILTER:  Filter (or filename) to source IPF- or GEN-file(s) with points/features that define zone for startpoints
+REM N1:         Shape number 1: an integer or float (english notation). For points: radius of circle around point, for polygons: distance X between points in the polygon, for lines: distance between points along the line
+REM N2:         Shape number 2: an integer or float (english notation). For points: dinstance between points on the circle, for polygons: distance Y between points in the polygon, for lines: not used, use any number e.g. 0 
+REM TOP:        TOP-level as an IDF-file, numeric value or columnname in IMODFILE for TOP-level
+REM BOT:        BOT-level as an IDF-file, numeric value or columnname in IMODFILE for BOT-level
 REM VIN:        Vertical interval number, number of points between top and bottom level
 REM RESULTPATH: Path for output ISD-file
-REM ISDFILE:    Filename for output ISD-file inside the subdirectory specified by the STARTPOINTSSUBDIR parameter below
-SET IMODFILE=analyse\XXXXX_WINFILTERS_RECT.GEN
+REM ISDFILE:    Filename for output ISD-file
+SET SRCPATH=input
+SET SRCFILTER=ZoneBW.GEN
 SET N1=5.0
 SET N2=5.0
-SET TOP=BKFILT_NAP
-SET BOT=OKFILT_NAP
+SET TOP=TopLevel
+SET BOT=BottomLevel
 SET VIN=5 
-SET RESULTPATH=startpoints
-SET ISDFILE=XXXXX_BW_9c5m5x.ISD
+SET RESULTPATH=result\startpoints
+SET ISDFILE=Startpoints_ZONE_BW.ISD
 
 REM *********************
 REM * Derived variables *
@@ -45,13 +48,17 @@ SETLOCAL EnableDelayedExpansion
 
 TITLE SIF-basis: %SCRIPTNAME%
 
+SET MSG=Starting script '%SCRIPTNAME%' ...
+ECHO %MSG%
+ECHO %MSG% > %LOGFILE%
+
 IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
 
 SET MSG=Creating startpoints ISD-file %ISDFILE% ...
-ECHO %MSG%
-ECHO %MSG% > %LOGFILE%
-ECHO "ISDcreate.exe" "%IMODFILE%" %N1% %N2% "%TOP%" "%BOT%" %VIN% "%RESULTPATH%\%ISDFILE%" >> %LOGFILE%
-"%TOOLSPATH%\ISDcreate.exe" "%IMODFILE%" %N1% %N2% "%TOP%" "%BOT%" %VIN% "%RESULTPATH%\%ISDFILE%" >> %LOGFILE%
+ECHO   %MSG%
+ECHO %MSG% >> %LOGFILE%
+ECHO "%TOOLSPATH%\ISDcreate.exe" "%SRCPATH%" "%SRCFILTER%" %N1% %N2% "%TOP%" "%BOT%" %VIN% "%RESULTPATH%\%ISDFILE%" >> %LOGFILE%
+"%TOOLSPATH%\ISDcreate.exe" "%SRCPATH%" "%SRCFILTER%" %N1% %N2% "%TOP%" "%BOT%" %VIN% "%RESULTPATH%\%ISDFILE%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 
 ECHO: 
@@ -137,4 +144,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE
