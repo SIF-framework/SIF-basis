@@ -9,7 +9,7 @@ REM *   Residual analysis of steady-state model(s) by         *
 REM *   creating Excelsheet with residual statistics, incl.   *
 REM *   comparison sheet, and IPF-files that compare absolute *
 REM *   residuals between first and other models              *
-REM * VERSION: 2.0.0                                          *
+REM * VERSION: 2.0.1                                          *
 REM * MODIFICATIONS                                           *
 REM *   2016-10-01 Initial version                            *
 REM ***********************************************************
@@ -225,4 +225,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

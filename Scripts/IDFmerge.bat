@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Merges values in selected IDF-files  *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
 REM *            Koen Jansen (Sweco)         *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2018-06-09 Initial version           *
 REM ******************************************
@@ -64,7 +64,7 @@ IF NOT EXIST "%INPUTPATH%" (
    GOTO error
 )
 
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
@@ -196,4 +196,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

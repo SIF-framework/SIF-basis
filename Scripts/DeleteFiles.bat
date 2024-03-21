@@ -6,7 +6,7 @@ REM * DeleteFiles.bat                        *
 REM * DESCRIPTION                            *
 REM *   Deletes files to recycle bin         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2019-12-04 Initial version           *
 REM ******************************************
@@ -197,4 +197,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

@@ -6,7 +6,7 @@ REM * Cleanup.bat                            *
 REM * DESCRIPTION                            *
 REM *   Deletes files in temporary folder(s) *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2019-08-26 Initial version           *
 REM ******************************************
@@ -76,7 +76,7 @@ IF "%ISLNKDELETED%"=="1" (
   )
 )
 
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
@@ -276,4 +276,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

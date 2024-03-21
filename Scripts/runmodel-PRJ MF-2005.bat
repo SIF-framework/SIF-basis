@@ -6,7 +6,7 @@ REM * runmodel-PRJ MF-2005.bat               *
 REM * DESCRIPTION                            *
 REM *   Process/run PRJ-file for MF-2005     *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2021-04-01 Initial version           *
 REM ******************************************
@@ -420,4 +420,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

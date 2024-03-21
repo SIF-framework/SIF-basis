@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Runs iMOD-batchfuntion MODELCOPY     *
 REM *   and copies modelinput from RUN-file  *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2018-10-10 Initial version           *
 REM ******************************************
@@ -211,4 +211,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

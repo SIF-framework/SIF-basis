@@ -5,7 +5,7 @@ REM *                                            *
 REM * LayerManager.bat                           *
 REM * DESCRIPTION                                *
 REM *   Checks REGIS/iMOD layers for consistency *
-REM * VERSION: 2.0.0                             *
+REM * VERSION: 2.0.1                             *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)       *
 REM * MODIFICATIONS                              *
 REM *   2019-02-08 Initial version               *
@@ -217,4 +217,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

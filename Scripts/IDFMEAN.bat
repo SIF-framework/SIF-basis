@@ -7,7 +7,7 @@ REM * DESCRIPTION                                *
 REM *   Calculates mean from transient IDF-files *
 REM *   with iMOD-batchfunction IDFMEAN.         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)       *
-REM * VERSION: 2.0.0                             *
+REM * VERSION: 2.0.1                             *
 REM * MODIFICATIONS                              *
 REM *   2020-03-30 Initial version               *
 REM **********************************************
@@ -115,7 +115,7 @@ REM Create empty result directory
 IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
 
 REM Log settings
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 SET MSG=IDFPATH: %IDFPATH%
@@ -292,4 +292,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

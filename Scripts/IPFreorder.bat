@@ -6,7 +6,7 @@ REM * IPFreorder.bat                         *
 REM * DESCRIPTION                            *
 REM *   Reorders or selects IPF-file columns *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.0.2                         *
 REM * MODIFICATIONS                          *
 REM *   2018-10-01 Initial version           *
 REM ******************************************
@@ -181,4 +181,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

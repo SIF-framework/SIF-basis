@@ -6,12 +6,11 @@ REM * ASC2IDF.bat                            *
 REM * DESCRIPTION                            *
 REM *   converts ASC-files to IDF            *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2020-02-12 Initial version           *
 REM ******************************************
 CALL :Initialization
-IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
 
 REM ********************
 REM * Script variables *
@@ -50,7 +49,7 @@ IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
 IF ERRORLEVEL 1 GOTO error
 
 REM Log settings
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 ECHO   SOURCEPATH=%SOURCEPATH%
@@ -125,6 +124,7 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
       )
     )
   )
+  IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
   IF EXIST "%~dp000 Settings.bat" (
     CALL "%~dp000 Settings.bat"
   ) ELSE (
@@ -158,4 +158,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

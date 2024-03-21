@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Creates IMF-file for REGIS-, and     *
 REM *   layermodel files                     *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.0.2                         *
 REM * MODIFICATIONS                          *
 REM *   2017-06-20 Initial version           *
 REM ******************************************
@@ -161,7 +161,7 @@ SETLOCAL EnableDelayedExpansion
 
 TITLE SIF-basis: %SCRIPTNAME%
 
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
@@ -701,4 +701,4 @@ REM FUNCTION: Retrieve and defines modelreferences MODELREF1-3 from RUN-filename
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

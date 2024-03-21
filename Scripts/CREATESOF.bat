@@ -5,7 +5,7 @@ REM *                                        *
 REM * CREATESOF.bat                          *
 REM * DESCRIPTION                            *
 REM *   Runs iMOD-batchfunction CREATESOF    *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
 REM * MODIFICATIONS                          *
 REM *   2021-11-18 Initial version           *
@@ -233,4 +233,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

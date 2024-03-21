@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Runs iMOD-batchfunction RUNFILE to   *
 REM *   convert a RUN-file to a PRJ-file     *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 1.0.0                         *
+REM * VERSION: 1.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2017-05-16 Initial version           *
 REM ******************************************
@@ -207,4 +207,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

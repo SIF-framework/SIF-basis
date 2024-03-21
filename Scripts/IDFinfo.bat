@@ -6,7 +6,7 @@ REM * IDFinfo.bat                            *
 REM * DESCRIPTION                            *
 REM *   Checks content of IDF-file(s)        *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2022-01-28 Initial version           *
 REM ******************************************
@@ -39,7 +39,7 @@ TITLE SIF-basis: %SCRIPTNAME%
 
 IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
 
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
@@ -143,4 +143,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

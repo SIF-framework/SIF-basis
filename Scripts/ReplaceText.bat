@@ -6,7 +6,7 @@ REM * ReplaceText.bat                         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)    *
 REM * DESCRIPTION                             *
 REM *   Replaces texts in one or more files   *
-REM * VERSION: 2.0.0                          *
+REM * VERSION: 2.0.1                          *
 REM * MODIFICATIONS                           *
 REM *   2019-10-14 Initial version            *
 REM *******************************************
@@ -80,7 +80,7 @@ SETLOCAL EnableDelayedExpansion
 TITLE SIF-basis: %SCRIPTNAME%
 
 REM Log settings
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
@@ -203,4 +203,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

@@ -6,12 +6,11 @@ REM * XYZ2IDF - IDF                                      *
 REM * DESCRIPTION                                        *
 REM *   Interpolates NoData-cells in IDF-file(s) with    *
 REM *   BIVAR/PCG method in iMOD XYZTOIDF batchfunction. *
-REM * VERSION: 2.0.0                                     *
+REM * VERSION: 2.0.1                                     *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)               *
 REM *   2017-09-26 Initial version                       *
 REM ******************************************************
 CALL :Initialization
-IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
 
 REM ********************
 REM * Script variables *
@@ -94,7 +93,7 @@ IF NOT "%POINTERIDFFILE%"=="" (
 
 IF "%MAXPROCCOUNT%"=="" SET MAXPROCCOUNT=1
 
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO !MSG!
 ECHO !MSG! > %LOGFILE%
 
@@ -219,6 +218,7 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
       )
     )
   )
+  IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
   IF EXIST "%~dp000 Settings.bat" (
     CALL "%~dp000 Settings.bat"
   ) ELSE (
@@ -252,4 +252,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

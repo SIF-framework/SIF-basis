@@ -6,7 +6,7 @@ REM * IPFplot.bat                            *
 REM * DESCRIPTION                            *
 REM *   Creates PNG-files for IPF-timeseries *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2019-03-06 Initial version           *
 REM ******************************************
@@ -23,8 +23,8 @@ REM When two valuelists from one TXT-file should be shwon in the samen plot, add
 REM ********************
 REM * Script variables *
 REM ********************
-REM IPFPATH1:        Path for set1 of input IFF-file(s)
-REM IPFPATH2:        Path for set2 of input IFF-file(s), or leave empty to skip
+REM IPFPATH1:        Path for set1 of input IFF-file(s) with associated TXT-files with timeseries (e.g. measured heads)
+REM IPFPATH2:        Path for set2 of input IFF-file(s) with associated TXT-files with timeseries (e.g. calculated heads via IDFTIMESERIES), or leave empty to skip
 REM IPFPREFIXES1:    Comma seperated list of prefixes for set1, i.e. part before IPFPOSTFIX1 of IPF-files to process and retrieve timeseries for, e.g. 'meetreeksen'
 REM IPFPREFIXES2:    Comma seperated list of prefixes for set2, i.e. part before IPFPOSTFIX2 of IPF-files to process and retrieve timeseries for, e.g. 'meetreeksen'
 REM IPFPOSTFIX1:     Postfix for set1. If MODELLAYERS is defined, this is the substring before the layernumber (e.g. _L). Otherwise all files from set1 are processed that match name '%IPFPREFIXES1%%IPFPOSTFIX1%*.IPF'
@@ -33,24 +33,24 @@ REM MODELLAYERS:     Comma seperated list of modellayer numbers to process, or l
 REM IDCOLSTRINGS:    comma-seperated list of ID-strings that define an ID. The first ID is used for plot title and filename. ID's of points in other IPF-files are used to match with points in the first IPF-file.
 REM                  ID-strings can be build up as follows: 1) if ID-string is a single integer i, the row value in (zero-based) column i is used; 2) '{i}'-substrings with i an integer are replaced with the row value in (zero-based) column i; 3) other non-value characters are simply copied
 REM                  Note: if no ID-strings are specified, points are matched by index if pointcount is equal (files are assumed to sorted), or by XY-coordinates in combination with equality of all other column values.
-REM SERIESNAMES:     Comma seperated list of (max two) names for series specified by added IPF-files, or leave empty to use a sequence number
-REM COLORS:          Colors for line and markers by a semicolon seperated list of (max two) comma seperated RGB-colors for specified series or, if one series, for series and average line. E.g. /c:200,0,0;0,200,0;0,0,200
+REM SERIESNAMES:     Comma seperated list of (max two) names for series specified by added IPF-files to be used in the plot legend, or leave empty to use a sequence number
+REM COLORS:          Colors for line and markers, specified with a comma-seperated list of (max two) semicolon-seperated RGB-colors for specified series or, if one series, for series and average line. E.g. /c:200;0;0,0;200;0
 REM ISSKIPEMPTYPLOT: Specify (with value 1) to skip plots that have IPF-points missing or only NoData-values
-REM TS_COLINDICES:   Comma seperated list of (zero-based) column indices of timeseries (value list) to plot in corresponding plotseries
+REM TS_COLINDICES:   Comma-seperated list of (one-based) column indices for timeseries (value list) in associated TXT-files to plot in corresponding plotseries
 REM RESULTPATH:      Path or name of subdirectory where the scriptresults are stored
 REM ISCLEANRESULT:   Specify (with value 1) if RESULTPATH folder should be emptied before 
-SET IPFPATH1=result\ts-IDF
+SET IPFPATH1=input\ValSet
 SET IPFPATH2=result\ts-IDF
-SET IPFPREFIXES1=%VALSET_STATRESULTFILE%
-SET IPFPREFIXES2=%VALSET_STATRESULTFILE%
+SET IPFPREFIXES1=ValSet
+SET IPFPREFIXES2=ValSet
 SET IPFPOSTFIX1=_L
 SET IPFPOSTFIX2=_L
-SET MODELLAYERS=1,4
+SET MODELLAYERS=
 SET IDCOLSTRINGS=2
 SET SERIESNAMES=meting,simulatie
-SET COLORS=93,157,201;255,127,14
+SET COLORS=93;157;201,255;127;14
 SET ISSKIPEMPTYPLOT=1
-SET TS_COLINDICES=0,1
+SET TS_COLINDICES=1,1
 SET RESULTPATH=result\plots
 SET ISCLEANRESULT=1
 
@@ -286,4 +286,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

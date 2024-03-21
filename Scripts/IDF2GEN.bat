@@ -6,7 +6,7 @@ REM * IDF2GEN.bat                            *
 REM * DESCRIPTION                            *
 REM *   Convertd IDF-file(s) to GEN-file(s)  *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2018-09-12 Initial version           *
 REM ******************************************
@@ -50,8 +50,12 @@ TITLE SIF-basis: %SCRIPTNAME%
 
 IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
 
-ECHO Converting IDF-file from %IDFPATH% ...
-ECHO Converting IDF-file from %IDFPATH% ... > %LOGFILE%
+SET MSG=Starting script '%SCRIPTNAME%' ...
+ECHO %MSG%
+ECHO %MSG% > %LOGFILE%
+
+ECHO   Converting IDF-file from %IDFPATH% ...
+ECHO Converting IDF-file from %IDFPATH% ... >> %LOGFILE%
 
 SET MERGEOPTION=
 SET HULLOPTION=
@@ -171,4 +175,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

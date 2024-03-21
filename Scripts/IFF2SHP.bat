@@ -1,15 +1,16 @@
 @ECHO OFF
-REM ******************************************
-REM * SIF-basis v2.2.0 (Sweco)               *
-REM *                                        *
-REM * IFF2SHP.bat                            *
-REM * DESCRIPTION                            *
-REM *   Convert IFF-file(s) to SHP-file(s)   *
-REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
-REM * MODIFICATIONS                          *
-REM *   2018-10-01 Initial version           *
-REM ******************************************
+REM *******************************************
+REM * SIF-basis v2.2.0 (Sweco)                *
+REM *                                         *
+REM * IFF2SHP.bat                             *
+REM * DESCRIPTION                             * 
+REM *   Convert IFF-file(s) to SHP-file(s)    *
+REM * AUTHOR(S): Koen van der Hauw (Sweco)    *
+REM * VERSION: 2.0.0                          *
+REM * MODIFICATIONS                           *
+REM *   2018-10-01 Initial version            *
+REM *   2024-01-12 Cleanup, move to SIF-basis *
+REM *******************************************
 CALL :Initialization
 
 REM ********************
@@ -17,9 +18,9 @@ REM * Script variables *
 REM ********************
 REM IFFPATH:     Path to input IFF-files
 REM IFFFILTER:   Filter for input IFF-files
-REM ISRECURSIVE: Specify if path should be searched recursively for filter (use 1), or leave empty to search just the specified path
-REM RESULTPATH:  Specify result path for SHP-files
-SET IFFPATH=postprocessing
+REM ISRECURSIVE: Specify (with value 1) that path should be searched recursively for filter, or leave empty to search just the specified path
+REM RESULTPATH:  Path for resulting SHP-files
+SET IFFPATH=input
 SET IFFFILTER=*.IFF
 SET ISRECURSIVE=0
 SET RESULTPATH=result
@@ -37,7 +38,7 @@ SETLOCAL ENABLEDELAYEDEXPANSION
 
 TITLE SIF-basis: %SCRIPTNAME%
 
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
@@ -53,7 +54,7 @@ IF NOT EXIST "%IFFPATH%\%IFFFILTER%" (
 SET MSG=Converting IFF-file to shapefile ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
-ECHO "IFFSHPconvert.exe" %RECURSIVEOPTION% "%IFFPATH%" "%IFFFILTER%" "%RESULTPATH%" >> %LOGFILE%
+ECHO "%TOOLSPATH%\IFFSHPconvert.exe" %RECURSIVEOPTION% "%IFFPATH%" "%IFFFILTER%" "%RESULTPATH%" >> %LOGFILE%
 "%TOOLSPATH%\IFFSHPconvert.exe" %RECURSIVEOPTION% "%IFFPATH%" "%IFFFILTER%" "%RESULTPATH%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 
@@ -140,4 +141,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

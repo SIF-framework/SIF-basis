@@ -7,7 +7,7 @@ REM * DESCRIPTION                              *
 REM *   Corrects absolute paths to current     *
 REM *   directory in a selection of iMOD-files *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)     *
-REM * VERSION: 2.0.0                           *
+REM * VERSION: 2.0.1                           *
 REM * MODIFICATIONS                            *
 REM *   2017-02-03 Initial version             *
 REM ********************************************
@@ -97,7 +97,7 @@ IF "%IS_BACKEDUP%"=="1" (
   ECHO !MSG! >> %LOGFILE%
 )
 ECHO: 
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE
 ECHO: 
 
 IF "%ISROOTPATHCHECKED%"=="1" (
@@ -404,4 +404,4 @@ REM FUNCTION: Intialize script and search/call 'SETTINGS\SIF.Settings.Project.ba
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

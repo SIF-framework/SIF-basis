@@ -6,7 +6,7 @@ REM * GENcreate.bat                                *
 REM * DESCRIPTION                                  *
 REM *   Creates GEN-file(s) for extent coordinates *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)         *
-REM * VERSION: 2.0.0                               *
+REM * VERSION: 2.0.1                               *
 REM * MODIFICATIONS                                *
 REM *   2019-04-16 Initial version                 *
 REM ************************************************
@@ -181,4 +181,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

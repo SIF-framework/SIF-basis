@@ -6,7 +6,7 @@ REM * MKWELLIPF.bat                          *
 REM * DESCRIPTION                            *
 REM *   Runs iMOD-batchfunction MKWELLIPF    *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2017-06-20 Initial version           *
 REM ******************************************
@@ -88,7 +88,7 @@ IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
 IF ERRORLEVEL 1 GOTO error
 
 REM Log settings
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
@@ -254,4 +254,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

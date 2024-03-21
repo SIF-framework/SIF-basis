@@ -7,7 +7,7 @@ REM * DESCRIPTION                                 *
 REM *   Performs a single IDFmath operation for   *
 REM *   multiple IDF-files and/or constant values *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)        *
-REM * VERSION: 2.0.0                              *
+REM * VERSION: 2.0.1                              *
 REM * MODIFICATIONS                               *
 REM *   2017-09-14 Initial version                *
 REM ***********************************************
@@ -61,7 +61,8 @@ TITLE SIF-basis: %SCRIPTNAME%
 REM Create arrays for package input
 SET Nr1=0
 FOR %%a in (%IDFFILES1%) do (
-  SET IDFFILES1_ARR[!Nr1!]=%%a
+  SET IDFFILE1=%%a
+  SET IDFFILES1_ARR[!Nr1!]=!IDFFILE1:"=!
   SET /A Nr1=Nr1+1
 )
 SET Nr2=0
@@ -195,4 +196,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

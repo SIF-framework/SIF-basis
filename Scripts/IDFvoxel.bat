@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Adds ITB-levels to GeoTOP IDF-files  *
 REM *   and renames to shorter filename.     *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2018-05-01 Initial version           *
 REM ******************************************
@@ -176,4 +176,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

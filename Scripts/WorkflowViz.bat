@@ -6,7 +6,7 @@ REM * WorkflowViz.bat                        *
 REM * DESCRIPTION                            *
 REM *   For visualization of SIF-workflows   *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2021-08-20 Initial version           *
 REM ******************************************
@@ -127,4 +127,4 @@ REM FUNCTION: Intialize script. To use: "CALL :Initialization", without argument
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

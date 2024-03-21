@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Selects points from IPF-file(s)      *
 REM * AUTHOR(S): Koen Jansen (Sweco)         *
 REM *            Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2022-12-22 Initial version           *
 REM ******************************************
@@ -69,7 +69,7 @@ SETLOCAL ENABLEDELAYEDEXPANSION
 
 TITLE SIF-basis: %SCRIPTNAME%
 
-SET MSG=Starting %SCRIPTNAME% ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
@@ -179,4 +179,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

@@ -7,7 +7,7 @@ REM * DESCRIPTION                                   *
 REM *   Clips iMOD modelfiles in specified          *
 REM *   subdirectories to some extent               *
 REM * AUTHOR(S): Pim Dik, Koen van der Hauw (Sweco) *
-REM * VERSION: 2.0.0                                *
+REM * VERSION: 2.0.1                                *
 REM * MODIFICATIONS                                 *
 REM *   2017-02-01 Initial version                  *
 REM *************************************************
@@ -242,4 +242,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

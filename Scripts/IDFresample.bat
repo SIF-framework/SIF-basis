@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Resamples specified zone cells with  *
 REM *   value from neighbor cells.           *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2021-05-10 Initial version           *
 REM ******************************************
@@ -171,4 +171,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE

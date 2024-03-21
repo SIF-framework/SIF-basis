@@ -1,12 +1,12 @@
 @ECHO OFF
 REM ******************************************
-REM * SIF-plus (Sweco)                       *
+REM * SIF-basis (Sweco)                      *
 REM *                                        *
 REM * IDFselect.bat                          *
 REM * DESCRIPTION                            * 
 REM *   Select cellvalue from IDF-files      *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2020-04-08 Initial version           *
 REM ******************************************
@@ -66,7 +66,7 @@ REM * Script commands *
 REM *******************
 SETLOCAL EnableDelayedExpansion
 
-TITLE SIF-plus: %SCRIPTNAME%
+TITLE SIF-basis: %SCRIPTNAME%
 
 IF "%SOURCEPATH%"=="" (
   ECHO Please specify SOURCEPATH-value
@@ -207,4 +207,4 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
 
 :exit
 ECHO:
-IF "%NOPAUSE%"=="" PAUSE
+IF NOT DEFINED NOPAUSE PAUSE
