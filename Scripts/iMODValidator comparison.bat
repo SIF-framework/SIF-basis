@@ -6,7 +6,7 @@ REM * iMODValidator comparison.bat                             *
 REM * DESCRIPTION                                              *
 REM *   Start iMODValidator comparison for RUN/PRJ-file        *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)                     *
-REM * VERSION: 2.2.0                                           *
+REM * VERSION: 2.2.1                                           *
 REM * MODIFICATIONS                                            *
 REM *   2016-10-01 Initial version                             *
 REM ************************************************************
@@ -52,10 +52,9 @@ SETLOCAL EnableDelayedExpansion
 
 TITLE SIF-basis: %SCRIPTNAME%
 
-SET MSG=Starting iMODValidatorPlus comparison ...
+SET MSG=Starting '%SCRIPTNAME%' ... 
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
-ECHO: 
 
 IF NOT "%RESULTPATH:~1,1%" == ":" (
   IF NOT "%RESULTPATH:~0,2%" == "\\" SET RESULTPATH=%THISPATH%\%RESULTPATH%
@@ -92,10 +91,13 @@ IF NOT EXIST "%MODIFIED_RUNFILEPATH%" (
   ECHO !MSG!
   ECHO !MSG! >> %LOGFILE%
   GOTO error
-)
 
-ECHO "%IMODVALIDATOREXE%" %SETTINGSOPTION% "%BASE_RUNFILEPATH%" "%MODIFIED_RUNFILEPATH%" "%RESULTPATH%" >> %LOGFILE%
-"%IMODVALIDATOREXE%" %SETTINGSOPTION% "%BASE_RUNFILEPATH%" "%MODIFIED_RUNFILEPATH%" "%RESULTPATH%" >> %LOGFILE%
+)
+REM Start iMODValidator
+ECHO   starting iMODValidator comparison ...
+ECHO   starting iMODValidator comparison ... >> %LOGFILE%
+ECHO "%IMODVALIDATOREXE%" %SETTINGSOPTION% /c:"%MODIFIED_RUNFILEPATH%" "%BASE_RUNFILEPATH%" "%RESULTPATH%" >> %LOGFILE%
+"%IMODVALIDATOREXE%" %SETTINGSOPTION% /c:"%MODIFIED_RUNFILEPATH%" "%BASE_RUNFILEPATH%" "%RESULTPATH%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 
 REM Check for issues in logfile
