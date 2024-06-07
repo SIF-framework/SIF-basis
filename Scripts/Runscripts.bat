@@ -7,7 +7,7 @@ REM * DESCRIPTION                                       *
 REM *   Runs all batchfiles from specified subdirectory *
 REM *   Before running, first deletes existing logfiles *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)              *
-REM * VERSION: 2.1.0                                    *
+REM * VERSION: 2.1.1                                    *
 REM * MODIFICATIONS                                     *
 REM *   2017-10-25 Initial version                      *
 REM *****************************************************
@@ -146,6 +146,7 @@ IF DEFINED PREMSG (
   ECHO: >CON
   ECHO %PREMSG% >CON
   ECHO: >CON
+)
 
 REM Check PRECONDFILE: If file does not exist workflow is skipped
 IF DEFINED PRECONDFILE IF NOT EXIST "%PRECONDFILE%" (
