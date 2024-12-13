@@ -6,7 +6,7 @@ REM * GENsplit.bat                           *
 REM * DESCRIPTION                            * 
 REM *   Splits GEN-lines with IPF-points     *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.0.2                         *
 REM * MODIFICATIONS                          *
 REM *   2017-08-26 Initial version           *
 REM ******************************************
@@ -15,16 +15,18 @@ CALL :Initialization
 REM ********************
 REM * Script variables *
 REM ********************
-REM GENPATH:        Input path to search for GEN-file(s)
-REM GENFILTER:      Filter for filename of input GEN-file(s) that will be split
-REM IPFFILE:        Input IPF-file that will be used to split GEN-lines
-REM SNAP_TOLERANCE: Maximum snap distance
-REM IPFCOLNR:       Columnindex (one based) for columnvalue to add to splitted GEN-line segments
-REM RESULTPATH:     Output path or outputfilename
+REM GENPATH:      Input path to search for GEN-file(s)
+REM GENFILTER:    Filter for filename of input GEN-file(s) that will be split
+REM IPFFILE:      Input IPF-file that will be used to split GEN-lines
+REM MAXSNAPDIST:  Maximum snap distance for IPF-points, points further from GEN-line are not snapped and not used for splitting GEN-lines
+REM MINSPLITDIST: Minimum split distance; if snapped points are closer than this distance from an existing node on a line, no extra node is inserted, or leave empty to use default (1m)
+REM IPFCOLNR:     Columnindex (one based) or column name in IPF-file for value to add to splitted GEN-line segments at location of IPF-point
+REM RESULTPATH:   Output path or outputfilename
 SET GENPATH=input
 SET GENFILTER=IJssel_lijnen.GEN
 SET IPFFILE=tmp\Meetdata_IJsselpeil_GEM2000-2010_sel.IPF
-SET SNAP_TOLERANCE=150
+SET MAXSNAPDIST=150
+SET MINSPLITDIST=
 SET IPFCOLNR=6
 SET RESULTPATH=result
 
@@ -55,8 +57,10 @@ IF DEFINED IPFFILE (
   IF DEFINED IPFCOLNR SET IPFCOLOPTION=!IPFCOLOPTION!,%IPFCOLNR%
 )
 
-ECHO "%TOOLSPATH%\GENsplit.exe" %IPFCOLOPTION% /s:%SNAP_TOLERANCE% "%GENPATH%" "%GENFILTER%" "%RESULTPATH%" >> %LOGFILE%
-"%TOOLSPATH%\GENsplit.exe" %IPFCOLOPTION% /s:%SNAP_TOLERANCE% "%GENPATH%" "%GENFILTER%" "%RESULTPATH%" >> %LOGFILE%
+SET SOPTION=/s:%MAXSNAPDIST%
+IF DEFINED MINSPLITDIST SET SOPTION=%SOPTION%,%MINSPLITDIST%
+ECHO "%TOOLSPATH%\GENsplit.exe" %IPFCOLOPTION% %SOPTION% "%GENPATH%" "%GENFILTER%" "%RESULTPATH%" >> %LOGFILE%
+"%TOOLSPATH%\GENsplit.exe" %IPFCOLOPTION% %SOPTION% "%GENPATH%" "%GENFILTER%" "%RESULTPATH%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 
 :success
