@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Converts point shapefile(s) to       *
 REM *   IPF-file(s)                          *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.1.0                         *
 REM * MODIFICATIONS                          *
 REM *   2018-05-01 Initial version           *
 REM ******************************************
@@ -19,10 +19,13 @@ REM ********************
 REM SHPPATH:     Path to shapefiles
 REM SHPFILTER:   Filter for point shapefiles to convert (wildcards * and ? allowed), e.g. *.shp
 REM ISRECURSIVE: Specify (wih value 1) that subdirectories of input path should be processed recursively 
+REM NULLVALUE:   Optional replacement-value for numeric NULL-values in shapefile. Use '*' to prevent default replacement. Note: ArcMap does NOT display these values correctly, QGIS does.
+REM              Default NULL-values in floating point columns are replaced by NaN; NULL-values in integer coluns are replaced by NULL (which makes it a text column)
 REM RESULTPATH:  Result path for IPF-files
 SET SHPPATH=input
 SET SHPFILTER=*.shp
 SET ISRECURSIVE=
+SET NULLVALUE=
 SET RESULTPATH=result
 
 REM *********************
@@ -41,9 +44,12 @@ ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
 SET RECURSEOPTION=
+SET NULLOPTION=
 IF "%ISRECURSIVE%"=="1" SET RECURSEOPTION=/r
-ECHO "IPFSHPconvert.exe" /o %RECURSEOPTION% "%SHPPATH%" "%SHPFILTER%" "%RESULTPATH%" >> %LOGFILE%
-"%TOOLSPATH%\IPFSHPconvert.exe" /o %RECURSEOPTION% "%SHPPATH%" "%SHPFILTER%" "%RESULTPATH%" >> %LOGFILE%
+IF DEFINED NULLVALUE SET NULLOPTION=/null:%NULLVALUE%
+
+ECHO "IPFSHPconvert.exe" /o %RECURSEOPTION% %NULLOPTION% "%SHPPATH%" "%SHPFILTER%" "%RESULTPATH%" >> %LOGFILE%
+"%TOOLSPATH%\IPFSHPconvert.exe" /o %RECURSEOPTION% %NULLOPTION% "%SHPPATH%" "%SHPFILTER%" "%RESULTPATH%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 
 ECHO: 
