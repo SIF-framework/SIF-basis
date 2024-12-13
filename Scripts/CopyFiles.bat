@@ -6,7 +6,7 @@ REM * CopyFiles.bat                          *
 REM * DESCRIPTION                            *
 REM *   Copy files to another path           *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.1.0                         *
 REM * MODIFICATIONS                          *
 REM *   2018-09-12 Initial version           *
 REM ******************************************
@@ -21,7 +21,8 @@ REM                         Note1: use double quotes to enclose filters with spa
 REM                         Note2: to copy one or more complete subdirectories under SOURCEPATH include subdirectoryname with backslash before filtername, e.g. subdirA\*.AAA,subdirB\*.BBB
 REM ISOVERWRITE:          Specify if existing targetfiles should be overwritten or skipped (1=overwrite; empty/non-1=skip file)
 REM ISMOVED:              Specify if files should be moved instead of copied (1=move; empty/non-1=copy)
-REM ISSTOPIFPATHEXISTS:   Specify if whole CopyFiles-script should be stopped (without raising an error) if targetpath already exists  
+REM SKIPIFSRCPATHMISSES:  Specify (with value 1) if whole CopyFiles-script should be skipped if SOURCEPATH does not exist; a message is shown and no error is raised
+REM SKIPIFTGTPATHEXISTS:  Specify (with value 1) if whole CopyFiles-script should be skipped if TARGETPATH already exists; a message is shown, but no error is raised
 REM TARGETPATH:           Target path to copy files to
 REM TARGETFILENAMES:      In case FILTER did not contain wildcards, specify target filenames (or USE %SOURCEFILTERS% to keep orginal filenames in a new path)
 REM ISADDMETADATA:        Specify if metadata should be created/added for each copied file (1=create/add metadata; empty/non-1=skip metadata)
@@ -33,7 +34,8 @@ SET SOURCEPATH=result\BND\100
 SET SOURCEFILTERS=*.IDF
 SET ISOVERWRITE=1
 SET ISMOVED=
-SET ISSTOPIFPATHEXISTS=
+SET SKIPIFSRCPATHMISSES=
+SET SKIPIFTGTPATHEXISTS=
 SET TARGETPATH=%DBASEPATH%\BASIS2\BND\100
 SET TARGETFILENAMES=
 SET ISADDMETADATA=
@@ -62,13 +64,20 @@ ECHO Starting script '%SCRIPTNAME%' ...
 ECHO Starting script '%SCRIPTNAME%' in '%THISPATH%' > %LOGFILE%
 
 IF NOT EXIST "%SOURCEPATH%" (
-  SET MSG=SOURCEPATH does not exist: %SOURCEPATH%
-  ECHO !MSG!
-  ECHO !MSG! >> %LOGFILE%
-  GOTO error
+  IF "%SKIPIFSRCPATHMISSES%"=="1" (
+    SET MSG=Warning: SOURCEPATH does not exist, nothing to copy: %SOURCEPATH%
+    ECHO !MSG!
+    ECHO !MSG! >> %LOGFILE%
+    GOTO success
+  ) ELSE (
+    SET MSG=SOURCEPATH does not exist: %SOURCEPATH%
+    ECHO !MSG!
+    ECHO !MSG! >> %LOGFILE%
+    GOTO error
+  )
 )
 
-IF "%ISSTOPIFPATHEXISTS%"=="1" (
+IF "%SKIPIFTGTPATHEXISTS%"=="1" (
   IF EXIST "%TARGETPATH%" (
     SET MSG=  script is skipped, TARGETPATH already exists: %TARGETPATH%
     ECHO !MSG!
