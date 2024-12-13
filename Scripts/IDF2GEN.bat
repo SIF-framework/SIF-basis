@@ -6,7 +6,7 @@ REM * IDF2GEN.bat                            *
 REM * DESCRIPTION                            *
 REM *   Convertd IDF-file(s) to GEN-file(s)  *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.0.2                         *
 REM * MODIFICATIONS                          *
 REM *   2018-09-12 Initial version           *
 REM ******************************************
@@ -17,9 +17,10 @@ REM * Script variables *
 REM ********************
 REM IDFPATH:       Path to GEN-file(s)
 REM IDFFILTER:     Filename filter for IDF-file(s), including extension (? and *-characters can be used as wildcards)
-REM METHOD:        Method for conversion to hull from all non-NoData IDF-cells with 1: a convex hull; 2: a concave hull, 3: cell edges; 4; cell edges + IPF-points; 5; outer edges of outer cells or 0) no hull, just write IPF-points for all non-NoData IDF-cells
+REM METHOD:        Method for conversion to hull for all regions with non-NoData IDF-cells with: 
+REM                  1: a convex hull; 2: a concave hull, 3: cell edges; 4: cell edges + IPF-points; 5: outer edges of outer cells; 0: no hull, just write IPF-points for all non-NoData IDF-cells
 REM METHODPAR:     Method parameter, depending on method: 2 (concave hull), specify number of neighbours (k-value), default is 3
-REM ISSPLIT:       Specify if IDF-file should be split into seperate features based on unique IDF-values (use value 1), or leave empty
+REM ISSPLIT:       Specify (with value 1) if IDF-file(s) should be split into seperate regions based on unique IDF-values to create a GEN-feature per region, or leave empty
 REM SKIPPEDVALUES: Comma seperated values (vi) or value ranges (vi-vj) to skip, use english notation for floating points. Do not add spaces.
 REM ADDLENGTH:     Specify with value 1 that an IDF-file with length of area of GEN-file in cells should be added, or leave empty to skip
 REM ISMERGED:      Specify if output GEN-files should be merged (use value 1) into one GEN-file, or leave empty
