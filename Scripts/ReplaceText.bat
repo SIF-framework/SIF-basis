@@ -6,7 +6,7 @@ REM * ReplaceText.bat                         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)    *
 REM * DESCRIPTION                             *
 REM *   Replaces texts in one or more files   *
-REM * VERSION: 2.0.1                          *
+REM * VERSION: 2.1.0                          *
 REM * MODIFICATIONS                           *
 REM *   2019-10-14 Initial version            *
 REM *******************************************
@@ -26,6 +26,7 @@ REM ISRECURSIVE:  Specify (with value 1) if subfolders should be processed recur
 REM ISFINDONLY:   Specify (with value 1) if matches should not be replaced, but return only the number of matches. TEXT2 is ignored with this option.
 REM ISBINPROCESSED:  Specify (with value 1) if option 'b' should be used to process 'binary' files (or actually files containing nul-characters), or leave empty
 REM EXCLUDEPATTERNS: Comma seperated list of text patterns to exclude from processing
+REM LOGPATTERNS:  Specify (with value 1) to log/summarize patterns that were found/replaced, or leave empty
 SET SEARCHPATH=Een of andere directory
 SET FILTER=*.bat
 SET TEXT1="Een of andere IDFfileA"
@@ -37,6 +38,7 @@ SET ISRECURSIVE=0
 SET ISFINDONLY=1
 SET ISBINPROCESSED=0
 SET EXCLUDEPATTERNS=
+SET LOGPATTERNS=
 
 REM *******************
 REM * Tooldescription *
@@ -98,6 +100,7 @@ SET RECURSIVEOPTION=
 SET FINDOPTION=
 SET BINOPTION=
 SET EXCLUDEOPTION=
+SET SUMOPTION=
 IF "%ISMATCHCASE%"=="1" SET CASEOPTION=/c
 IF "%ISDATERESET%"=="1" SET DATEOPTION=/d
 IF "%ISREGEXP%"=="1" SET REGEXPOPTION=/x
@@ -105,10 +108,11 @@ IF "%ISRECURSIVE%"=="1" SET RECURSIVEOPTION=/r
 IF "%ISFINDONLY%"=="1" SET FINDOPTION=/f
 IF "%ISBINPROCESSED%"=="1" SET BINOPTION=/b
 IF NOT "%EXCLUDEPATTERNS%"=="" SET EXCLUDEOPTION=/e:%EXCLUDEPATTERNS%
+IF "%LOGPATTERNS%"=="1" SET SUMOPTION=/sum
 
 REM Execute ReplaceText
-ECHO "%REPLACETEXTEXE%" /m /l:%LOGFILE% %FINDOPTION% %CASEOPTION% %DATEOPTION% %REGEXPOPTION% %RECURSIVEOPTION% %BINOPTION% %EXCLUDEOPTION% "%SEARCHPATH%" "%FILTER%" %TEXT1% %TEXT2% >> %LOGFILE%
-"%REPLACETEXTEXE%" /m /l:%LOGFILE% %FINDOPTION% %CASEOPTION% %DATEOPTION% %REGEXPOPTION% %RECURSIVEOPTION% %BINOPTION% %EXCLUDEOPTION% "%SEARCHPATH%" "%FILTER%" %TEXT1% %TEXT2%
+ECHO "%REPLACETEXTEXE%" /m /l:%LOGFILE% %SUMOPTION% %FINDOPTION% %CASEOPTION% %DATEOPTION% %REGEXPOPTION% %RECURSIVEOPTION% %BINOPTION% %EXCLUDEOPTION% "%SEARCHPATH%" "%FILTER%" %TEXT1% %TEXT2% >> %LOGFILE%
+"%REPLACETEXTEXE%" /m /l:%LOGFILE% %SUMOPTION% %FINDOPTION% %CASEOPTION% %DATEOPTION% %REGEXPOPTION% %RECURSIVEOPTION% %BINOPTION% %EXCLUDEOPTION% "%SEARCHPATH%" "%FILTER%" %TEXT1% %TEXT2%
 SET RESULT=%ERRORLEVEL%
 IF %RESULT% GEQ 0 (
   IF %RESULT%==0 (
