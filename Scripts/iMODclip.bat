@@ -7,7 +7,7 @@ REM * DESCRIPTION                                   *
 REM *   Clips iMOD modelfiles in specified          *
 REM *   subdirectories to some extent               *
 REM * AUTHOR(S): Pim Dik, Koen van der Hauw (Sweco) *
-REM * VERSION: 2.0.1                                *
+REM * VERSION: 2.0.2                                *
 REM * MODIFICATIONS                                 *
 REM *   2017-02-01 Initial version                  *
 REM *************************************************
@@ -101,7 +101,7 @@ ECHO CLIPEXTENT=%CLIPEXTENT% >> %LOGFILE%
 REM Define clip options
 SET XOPTION=
 SET ERROPTION=
-IF NOT "%SKIPPEDEXTENSIONS%"=="" SET XOPTION=/x:%SKIPPEDEXTENSIONS%
+IF NOT "%SKIPPEDEXTENSIONS%"=="" SET XOPTION=/sx:%SKIPPEDEXTENSIONS%
 IF "%ISERRORCONT%"=="0" SET ERROPTION=/err
 
 REM Do clipping
