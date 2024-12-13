@@ -6,7 +6,7 @@ REM * iMODmetadata.bat                       *
 REM * DESCRIPTION                            *
 REM *   Creates MET-file for given input     *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.0.2                         *
 REM * MODIFICATIONS                          *
 REM *   2019-08-26 Initial version           *
 REM ******************************************
@@ -19,7 +19,7 @@ REM SOURCEPATH:   Input path with iMOD-files
 REM SOURCEFILTER: Filter for input files (wildcards * and ? are allowed)
 REM ISRECURSIVE:  Specify (with value 1) if subdirectories in input path are checked recursively for input files
 REM ISOVERWRITE:  Specify (with value 1) if existing metadatafiles should be overwritten or merged (with value 0)
-REM METADATA_SOURCE:             Location of most important sourcefiles. Note that the ROOTPATH-part will be removed from paths in this variable to result in relative paths
+REM METADATA_SOURCE:             Location of most important sourcefiles. Note that the ROOTPATH-part will be removed from paths in this variable to result in relative paths; leave empty to keep existing source text
 REM METADATA_DESCRIPTION:        Description of iMOD-file
 REM METADATA_PROCESSDESCRIPTION: Description of process for creating iMOD-file, or leave empty to skip
 REM METADATA_UNIT:               Unit abbreviation of data in iMOD-file, or leave empty to skip
@@ -70,6 +70,11 @@ IF NOT EXIST "%SOURCEPATH%" (
 SET ISRECURSIVEOPTION=
 IF "%ISRECURSIVE%"=="1" SET ISRECURSIVEOPTION=/R
 
+SET SOURCEOPTION=""
+IF DEFINED METADATA_SOURCE (
+  SET SOURCEOPTION=="!METADATA_SOURCE:%ROOTPATH%\=!"
+)
+
 CD "%SOURCEPATH%"
 FOR %ISRECURSIVEOPTION% %%G IN ("%SOURCEFILTER%") DO (
   SET MSG=   adding metadata for %%~nG ...
@@ -80,8 +85,8 @@ FOR %ISRECURSIVEOPTION% %%G IN ("%SOURCEFILTER%") DO (
   SET FNAMEdp=%%~dpG
   SET OVERWRITEOPTION=
   IF "%ISOVERWRITE%"=="1" SET OVERWRITEOPTION=/o
-  ECHO "%TOOLSPATH%\iMODmetadata.exe" !OVERWRITEOPTION! "!FNAMEdp!\!FNAMEnx!" "" "" 1 "%MODELREF0%" "%METADATA_DESCRIPTION%" "%CONTACTORG%" "" "%METADATA_UNIT%" "" ="!METADATA_SOURCE:%ROOTPATH%\=!" "Zie !THISPATH:%ROOTPATH%\=!; %METADATA_PROCESSDESCRIPTION%" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" "%CONTACTEMAIL%" >> %LOGFILEPATH%
-  "%TOOLSPATH%\iMODmetadata.exe" !OVERWRITEOPTION! "!FNAMEdp!\!FNAMEnx!" "" "" 1 "%MODELREF0%" "%METADATA_DESCRIPTION%" "%CONTACTORG%" "" "%METADATA_UNIT%" "" ="!METADATA_SOURCE:%ROOTPATH%\=!" "Zie !THISPATH:%ROOTPATH%\=!; %METADATA_PROCESSDESCRIPTION%" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" "%CONTACTEMAIL%" >> %LOGFILEPATH%
+  ECHO "%TOOLSPATH%\iMODmetadata.exe" !OVERWRITEOPTION! "!FNAMEdp!\!FNAMEnx!" "" "" 1 "%MODELREF0%" "%METADATA_DESCRIPTION%" "%CONTACTORG%" "" "%METADATA_UNIT%" "" %SOURCEOPTION% "Zie !THISPATH:%ROOTPATH%\=!; %METADATA_PROCESSDESCRIPTION%" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" "%CONTACTEMAIL%" >> %LOGFILEPATH%
+  "%TOOLSPATH%\iMODmetadata.exe" !OVERWRITEOPTION! "!FNAMEdp!\!FNAMEnx!" "" "" 1 "%MODELREF0%" "%METADATA_DESCRIPTION%" "%CONTACTORG%" "" "%METADATA_UNIT%" "" %SOURCEOPTION% "Zie !THISPATH:%ROOTPATH%\=!; %METADATA_PROCESSDESCRIPTION%" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" "%CONTACTEMAIL%" >> %LOGFILEPATH%
   IF ERRORLEVEL 1 GOTO error
 )
 ECHO:
