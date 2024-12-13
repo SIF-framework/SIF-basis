@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Creates IMF-file for REGIS-, and     *
 REM *   layermodel files                     *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.2                         *
+REM * VERSION: 2.1.1                         *
 REM * MODIFICATIONS                          *
 REM *   2017-06-20 Initial version           *
 REM ******************************************
@@ -29,12 +29,15 @@ REM       - when a RUN/PRJ-file is present in the same folder: MODELREF, MODELRE
 REM       - otherwise: MODELREF1, defined by the directoryname just below the WORKIN-folder
 REM       Use empty string ("") to skip parameters for a Mapfile. 
 REM IMODFILES:       Comma seperated list of iMOD-files (or path with filter) to be added before REGIS-files. Use double quotes around filenames with spaces.
-REM IMODLEGENDS:     Comma seperated list of iMOD-legends for one or more of the IDF-files/paths. The last legend is used for remaining IMODFILES. Use double quotes around filenames with spaces. Use "" to skip legend.
-REM CSLEGENDS:       Comma seperated list of DLF-legends for one or more of the IPF-files/paths. Use "" to skip for an IPF-file, or leave CSLEGENDS empty to skip completely.
+REM IMODLEGENDS:     Comma seperated list of iMOD-legends for one or more of the IMODFILES. The last legend is used for remaining IMODFILES. Use double quotes around a filename with spaces. Use "" to skip legend.
+REM IMODALIASES:     Comma seperated list of iMOD-alias definitions for one or more of the IMODFILES. The last alias is used for remaining IMODFILES. Use double quotes around an alias with spaces. Use "" to skip alias.
+REM                  Currently each alias definition is used as prefix before the source filename, excluding extension; an underscore is added after the prefix.
+REM CSLEGENDS:       Comma seperated list of DLF-legends for one or more of the IMODFILES. Use "" to skip for an IPF-file, or leave CSLEGENDS empty to skip completely.
 REM FILESELECTIONS:  Comma seperated list of 0/1-values to specified if iMOD-file/path should be selected/highlighted in IMF-file
 REM EXTRAPARLINES:   Comma seperated list (surround by double quotes) with extra parameter lines per Mapfile. Multiple parameter line can be specified by seperating with a semicolcon.
-SET IMODFILES="%DBASEPATH%\BASIS1\BND\*.IDF","%RESULTSPATH%\%MODELREF:_=\%\residu\*.IPF","%ROOTPATH%\BASISDATA\Measurements\*.IPF"
-SET IMODLEGENDS="%LEGENDPATH%\BND.leg","%LEGENDPATH%\residuen.leg",""
+SET IMODFILES="%DBASEPATH%\%MODELREF1%\Maaiveld\MV_*.IDF","%DBASEPATH%\%MODELREF1%\KHV","%DBASEPATH%\%MODELREF1%\KVV"
+SET IMODLEGENDS="%LEGENDPATH%\maaiveld_-10-100.leg","%LEGENDPATH%\kh-waarden.leg","%LEGENDPATH%\kv-waarden.leg"
+SET IMODALIASES=BASISDATA,"%MODELREF1%",""
 SET CSLEGENDS="","","%LEGENDPATH%\DLF\filter_legend.dlf"
 SET FILESELECTIONS=0,1,0
 SET EXTRAPARLINES="","COLUMN=15;TEXTSIZE=5;THICKNESS=2","COLOR=0,128,192"
@@ -56,11 +59,13 @@ REM Parameters of Map section2: part below REGIS/Modellayers
 REM --------------------------------------------------------
 REM IMODFILES2:      As IMODFILES, at bottom of Maplayer list, below REGIS- or TOP/BOT-files
 REM IMODLEGENDS2:    As IMODLEGENDS, but for IMODFILES2
+REM IMODALIASES2:    As IMODALIASES, but for IMODFILES2
 REM CSLEGENDS2:      As CSLEGENDS, but for IMODFILES2
 REM FILESELECTIONS2: As FILESELECTIONS, but for FILESELECTIONS2
 REM EXTRAPARLINES2:  As EXTRAPARLINES, but for FILESELECTIONS2
 SET IMODFILES2="%DBASEPATH%\%MODELREF1%\MAAIVELD\*.IDF","%RESULTSPATH%\%MODELREF:_=\%\head\*_L*.IDF"
 SET IMODLEGENDS2="%LEGENDPATH%\maaiveld_stretched.leg","%LEGENDPATH%\maaiveld_stretched.leg"
+SET IMODALIASES2=
 SET CSLEGENDS2=
 SET FILESELECTIONS2=0,0
 SET EXTRAPARLINES2="","LINECOLOR=0,128,192;PRFTYPE=7"
@@ -82,12 +87,14 @@ REM EXTENT:          Extent of the IMF-file datafiles (llx,lly,urx,ury or llx ll
 REM ISADDCDTOIMF:    Use value 1 to add the name of the current subdirectory to the IMF-file
 REM ISOPENIMOD:      Specify with value 1 if iMOD should be opened, use 0 otherwise
 REM RESULTPATH:      Result path for IMF-file
-REM IMFFILENAME:     Specify result filename for IMF-file
+REM IMFFILENAME:     Specify result filename for IMF-file (including .IMF extension)
+REM ISLINKCREATED: Specify (with value 1) if link to resulting IMF-file location should be created
 SET EXTENT=%MODELEXTENT%
 SET ISADDCDTOIMF=0
 SET ISOPENIMOD=1
 SET RESULTPATH=%IMFILESPATH%
 SET IMFFILENAME=%MODELREF% - modelresults.IMF
+SET ISLINKCREATED=1
 
 REM IMODEXE:         path to iMOD-executable, or use %IMODEXE% to refer to iMOD-executable as defined in Sweco.iMOD.settings.bat
 REM IMFCREATEEXE:    path to IMFcreate-executable
@@ -120,6 +127,8 @@ REM FILE=<filename>                 For each iMOD-file specify the filename on a
 REM                                 If the file type is equal to type of previous file, the same settings are used
 REM For IDF-files, the following optional keys are available to define settings:
 REM LEGEND=<filename>               Define path of an iMOD legend (.LEG) file
+REM ALIAS=<aliasdefinition>         Defines an alias that can be shown in iMOD as an alternative for the filename;
+REM                                 Currently <aliasdefinition> is used as prefix before the source filename, excluding extension; an underscore is added after the prefix
 REM CSLEGEND=<filename>             Define path of an iMOD Drill File Legend (.DLF) file to visualizee file in cross sections
 REM SELECTED=<0|1>                  Use 1 to select the IDF-file, 0 if otherwise. Default is 0
 REM LINECOLOR=r,g,b                 Define RGB color (integer values) for a line in the crosssection tool
@@ -180,7 +189,7 @@ IF "%RESULTPATH%"=="" (
 REM As a default do not open iMOD
 IF NOT DEFINED ISOPENIMOD SET ISOPENIMOD=0
 
-REM Create arrays for IMODFILES, IMODLEGENDS and other input and check for equal lengths
+REM Create arrays for IMODFILES, IMODLEGENDS, IMODALIASES and other input and check for equal lengths
 SET MSG=  parsing settings ...
 ECHO %MSG%
 ECHO %MSG% >> %LOGFILE%
@@ -209,6 +218,11 @@ FOR %%D IN (%IMODLEGENDS%) DO (
   SET IMODLEGENDS_ARR[!Nl!]=%%D
   SET /A Nl=Nl+1
 )
+SET Na=0
+FOR %%D IN (%IMODALIASES%) DO (
+  SET ALIAS_ARR[!Na!]=%%D
+  SET /A Na=Na+1
+)
 SET Nd=0
 FOR %%D IN (%CSLEGENDS%) DO (
   SET CSLEGENDS_ARR[!Nd!]=%%D
@@ -227,6 +241,11 @@ FOR %%A IN (%EXTRAPARLINES%) DO (
 IF %Ni% LSS %Nl% (
   ECHO Ensure that number of IMODFILES (%Ni%^) is greater than or equal to number of IMODLEGENDS (%Nl%^)
   ECHO Ensure that number of IMODFILES (%Ni%^) is greater than or equal to number of IMODLEGENDS (%Nl%^) >> %LOGFILE%
+  GOTO error
+)
+IF %Ni% LSS %Na% (
+  ECHO Ensure that number of IMODFILES (%Ni%^) is greater than or equal to number of IMODALIASES (%Na%^)
+  ECHO Ensure that number of IMODFILES (%Ni%^) is greater than or equal to number of IMODALIASES (%Na%^) >> %LOGFILE%
   GOTO error
 )
 IF %Ni% LSS %Ns% (
@@ -268,6 +287,11 @@ FOR %%D IN (%IMODLEGENDS2%) DO (
   SET IMODLEGENDS2_ARR[!Nl2!]=%%D
   SET /A Nl2=Nl2+1
 )
+SET Na2=0
+FOR %%D IN (%IMODALIASES2%) DO (
+  SET ALIAS2_ARR[!Na2!]=%%D
+  SET /A Na2=Na2+1
+)
 SET Ns2=0
 FOR %%A IN (%FILESELECTIONS2%) DO (
   SET FILESELECTIONS2_ARR[!Ns2!]=%%A
@@ -286,6 +310,11 @@ FOR %%A IN (%EXTRAPARLINES2%) DO (
 IF %Ni2% LSS %Nl2% (
   ECHO Ensure that number of IMODFILES2 (%Ni2%^) is greater than or equal to number of IMODLEGENDS2 (%Nl2%^)
   ECHO Ensure that number of IMODFILES2 (%Ni2%^) is greater than or equal to number of IMODLEGENDS2 (%Nl2%^) >> %LOGFILE%
+  GOTO error
+)
+IF %Ni% LSS %Na2% (
+  ECHO Ensure that number of IMODFILES (%Ni2%^) is greater than or equal to number of IMODALIASES2 (%Na2%^)
+  ECHO Ensure that number of IMODFILES (%Ni2%^) is greater than or equal to number of IMODALIASES2 (%Na2%^) >> %LOGFILE%
   GOTO error
 )
 IF %Ni2% LSS %Ns2% (
@@ -405,6 +434,14 @@ IF "%CREATEINI%"=="1" (
         )
       )
 
+      REM Add alias if specified
+      IF %%i LEQ !Na! (
+        IF DEFINED ALIAS_ARR[%%i] (
+          SET ALIAS=!ALIAS_ARR[%%i]:"=!
+          ECHO ALIAS=!ALIAS! >> %INIFILE%
+        )
+      )
+
       REM Add cross section legend file if specified
       IF %%i LEQ !Nd! (
         IF DEFINED CSLEGENDS_ARR[%%i] (
@@ -495,6 +532,14 @@ IF "%CREATEINI%"=="1" (
           )
         )
       )
+	  
+      REM Add alias if specified
+      IF %%i LEQ !Na2! (
+        IF DEFINED ALIAS2_ARR[%%i] (
+          SET ALIAS2=!ALIAS2_ARR[%%i]:"=!
+          ECHO ALIAS=!ALIAS2! >> %INIFILE%
+        )
+      )
 
       REM Add cross section legend file if specified
       IF %%i LEQ !Nd2! (
@@ -567,9 +612,19 @@ IF "%CREATEINI%"=="1" (
 )
 
 ECHO   starting IMFcreate ...
-ECHO "%TOOLSPATH%\IMFcreate.exe" %INIFILE% "%RESULTPATH%" >> %LOGFILE%
-"%TOOLSPATH%\IMFcreate.exe" %INIFILE% "%RESULTPATH%" >> %LOGFILE%
+ECHO "%IMFCREATEEXE%" %INIFILE% "%RESULTPATH%" >> %LOGFILE%
+"%IMFCREATEEXE%" %INIFILE% "%RESULTPATH%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
+
+IF "%ISLINKCREATED%"=="1" (
+  REM Create link to resulting IMF-file
+  IF EXIST "%TOOLSPATH%\CreateLink.vbs" (
+    ECHO   creating shortcut to result path ...
+    SET NAME=%IMFFILENAME:.IMF=.lnk%.lnk
+    ECHO CSCRIPT "%TOOLSPATH%\CreateLink.vbs" "!NAME!" "%RESULTPATH%" >> %LOGFILE%
+    CSCRIPT "%TOOLSPATH%\CreateLink.vbs" "!NAME!" "%RESULTPATH%" >NUL
+  )
+)
 
 :success
 SET MSG=Script finished, see "%~n0.log"
@@ -649,7 +704,6 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
       )
     )
   )
-
   GOTO:EOF
 
 REM FUNCTION: Retrieve and defines modelreferences MODELREF1-3 from RUN-filename. To use: "CALL :RetrieveModelReference", without arguments
@@ -665,7 +719,6 @@ REM FUNCTION: Retrieve and defines modelreferences MODELREF1-3 from RUN-filename
       SET RUNFILE=%%~nD
     )
   )
-  IF NOT DEFINED RUNFILE SET RUNFILE=UNDEFINED
 
   IF DEFINED RUNFILE (
     REM Parse RUN/PRJ-filename: get filename without extension, remove runfile prefix and retrieve and store parameters seperated by '_'
@@ -674,22 +727,25 @@ REM FUNCTION: Retrieve and defines modelreferences MODELREF1-3 from RUN-filename
       ECHO Runfile prefix "%RUNFILEPREFIX%_" not found for !RUNFILE!, ensure that the RUN-filename starts with this prefix
       ECHO: 
     )
-  
-    REM Check for underscores in last part of RUN-file and split if it contains underscores
-    FOR /F "tokens=1,2,3* delims=_" %%a IN ("!RUNPARS!") DO (
-      SET MODELREF1=%%a
-      SET MODELREF2=%%b
-      SET MODELREF3=%%c
-    ) 
-    SET MODELREF=!MODELREF1!
-    IF DEFINED MODELREF2 SET MODELREF=!MODELREF!_!MODELREF2!
-    IF DEFINED MODELREF3 SET MODELREF=!MODELREF!_!MODELREF3!
   ) ELSE (
     REM Retrieve MODELREF1 from directoryname below WORKIN
     FOR /F "tokens=1,* delims=\" %%a IN ("!CD:%ROOTPATH%\WORKIN\=!") DO (
       SET MODELREF1=%%a
     )
+
+    REM Ensure some name is defined to prevent later errors 
+    IF NOT DEFINED RUNFILE SET RUNFILE=UNDEFINED
   )
+
+  REM Check for underscores in last part of RUN-file and split if it contains underscores
+  FOR /F "tokens=1,2,3* delims=_" %%a IN ("!RUNPARS!") DO (
+    SET MODELREF1=%%a
+    SET MODELREF2=%%b
+    SET MODELREF3=%%c
+  ) 
+  SET MODELREF=!MODELREF1!
+  IF DEFINED MODELREF2 SET MODELREF=!MODELREF!_!MODELREF2!
+  IF DEFINED MODELREF3 SET MODELREF=!MODELREF!_!MODELREF3!
   
   REM Ensure variables are available outside function call
   ENDLOCAL & SET MODELREF=%MODELREF% & SET MODELREF1=%MODELREF1% & SET MODELREF2=%MODELREF2% & SET MODELREF3=%MODELREF3%
