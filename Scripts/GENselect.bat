@@ -21,8 +21,8 @@ REM Specify optional logical expression to select column values with
 REM EXPCOLNR:     For logical expression: specifiy (one based) column number of column to evaluate. Note: columnvalues are checked to determine type. Inconsistencies or a single empty string will result in type 'string'.
 REM EXPOP:        For logical expression: specify logical operator: eq, gt, gteq, lt, lteq, uneq. Note: gt, gteq, lt and lteq might behave unexpected for string type comparisons, which is based on (ordinal) alphabetical order.
 REM EXPVAL:       For logical expression: specify (string, integer, double, DateTime) value to compare with. Leave empty for empty string.
-REM CHANGE_EXPS:  One or more column expressions, seperated by semicolons, for modifying columns of selected rows and copy other rows, or leave empty to copy only selected rows. E.g. 3,*2.5,NaN;TOP,-1
-REM               Each column/exp-definition is specified by 'c,e,n', where:
+REM CHANGE_EXPS:  One or more column expressions, seperated by commas, for modifying columns of selected rows and copy other rows, or leave empty to copy only selected rows. E.g. 3;*2.5;NaN,TOP;-1
+REM               Each column/exp-definition is specified by 'c;e;n', where:
 REM                'c' is a (one based) column index or a column name. If a column name is not found it is added, where non-selected points will receive an empty string as a value.
 REM                'e' is a constant value or a simple expression, defined as operator and value. Valid operators are: *, /, + and -.
 REM                'n' is an optional NoData-value for new columns and rows that were not selected.
