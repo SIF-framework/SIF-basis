@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Splits IPF-files based on values in  *
 REM *   specified column                     *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.0.2                         *
 REM * MODIFICATIONS                          *
 REM *   2018-09-01 Initial version           *
 REM ******************************************
@@ -18,12 +18,12 @@ REM * Script variables *
 REM ********************
 REM IPFPATH:     Path to input IPF-files
 REM IPFFILTER:   Filter, with use of wildcards, for filenames of input IPF-files, or a single filename
-REM SPLITCOLIDX: Column name or index (one based) to split IPF-files on
+REM SPLITCOL:    Column name or number (one-based) to split IPF-files on
 REM SPLITPREFIX: Prefix for outputfilename before splitvalue. Before this prefix an underscore is added by the tool
 REM RESULTPATH:  Specify result path
 SET IPFPATH=result
 SET IPFFILTER=ZTP_WINFILTERS.IPF
-SET SPLITCOLIDX=8
+SET SPLITCOL=8
 SET SPLITPREFIX=L
 SET RESULTPATH=result
 
@@ -53,8 +53,8 @@ FOR %%G IN ("%IPFPATH%\%IPFFILTER%") DO (
   SET IPFFILENAME=%%~nxG
   ECHO   splitting !IPFFILENAME! ...
   ECHO   splitting !IPFFILENAME! ... >> %LOGFILE%
-  ECHO "IPFsplit.exe" %PREFIXOPTION% "%IPFPATH%" "!IPFFILENAME!" %SPLITCOLIDX% "%RESULTPATH%"  >> %LOGFILE%
-  "%TOOLSPATH%\IPFsplit.exe" %PREFIXOPTION% "%IPFPATH%" "!IPFFILENAME!" %SPLITCOLIDX% "%RESULTPATH%" >> %LOGFILE%
+  ECHO "IPFsplit.exe" %PREFIXOPTION% "%IPFPATH%" "!IPFFILENAME!" %SPLITCOL% "%RESULTPATH%"  >> %LOGFILE%
+  "%TOOLSPATH%\IPFsplit.exe" %PREFIXOPTION% "%IPFPATH%" "!IPFFILENAME!" %SPLITCOL% "%RESULTPATH%" >> %LOGFILE%
   IF ERRORLEVEL 1 GOTO error
 )
 
