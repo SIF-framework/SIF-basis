@@ -4,9 +4,9 @@ REM * SIF-basis v2.1.0 (Sweco)                                 *
 REM *                                                          *
 REM * iMODValidator comparison.bat                             *
 REM * DESCRIPTION                                              *
-REM *   Start iMODValidator comparison for RUN/PRJ-file        *
+REM *   Runs iMODValidator modelcomparison for RUN/PRJ-file    *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)                     *
-REM * VERSION: 2.2.1                                           *
+REM * VERSION: 2.2.3                                           *
 REM * MODIFICATIONS                                            *
 REM *   2016-10-01 Initial version                             *
 REM ************************************************************
@@ -25,7 +25,11 @@ REM BASE_RUNFILEPATH:     Full path and filename to base RUN-file if BASE_MODELN
 REM MODIFIED_MODELNAME:   Modified modelname as MODELNAME[_SUBMODELNAME[_MODELPOSTFIX]] (without modelprefix), or leave empty to define RUN-filename via MODIFIED_RUNFILEPATH
 REM MODIFIED_MODELPATH:   Path to base modelrunfile, relative path from RUNFILES-folder to RUN-file, do not add last backslash. Leave empty to search default location (RUNFILESPATH\MODELNAME\SUBMODELNAME\MODELPOSTFIX).
 REM MODIFIED_RUNFILEPATH: Full path and filename to modified RUN-file if MODIFIED_MODELNAME is not used. MODIFIED_MODELPATH is ignored then.
+REM COMP_IDFMETHOD:       Optionally, specify method for IDF-comparison: 0=automatically detect divide/subtract (default); 1=subtract
+REM COMP_NODATAVALUE:     Optionally, specify (floating point) NoData comparison value (default: 0); use NaN to get NoData in an output cell if one of both compared cells has a NoData-value
 REM RESULTPATH:           Path to write results to, e.g. %WORKOUTPATH%\%MODELNAME:_=\%\validation\iMODValidator
+REM OPENIMOD:             Specify if iMOD should be opened with resulting IMF-file after completion 0 = iMOD is NOT opened; 1 = iMOD is opened; or leave both OPENIMOD and OPENEXCEL empty to use XML-settings
+REM OPENEXCEL:            Specify if Excel should be opened with resulting spreadsheet after completion 0 = Excel is NOT opened ; 1 = Excel is opened; or leave both OPENIMOD and OPENEXCEL empty to use XML-settings
 REM SETTINGSFILE:         Path to XML-file with iMODValidator settings (background GEN-files, etc)
 SET BASE_MODELNAME=ORG_BAS
 SET BASE_MODELPATH=
@@ -33,7 +37,11 @@ SET BASE_RUNFILEPATH=
 SET MODIFIED_MODELNAME=ORG_BND-org
 SET MODIFIED_MODELPATH=ORG\BAS
 SET MODIFIED_RUNFILEPATH=
-SET RESULTPATH=controle\iMODValidator
+SET COMP_IDFMETHOD=0
+SET COMP_NODATAVALUE=0
+SET RESULTPATH=result\comparison
+SET OPENIMOD=1
+SET OPENEXCEL=1
 SET SETTINGSFILE=%SETTINGSPATH%\SIF.Settings.iMODValidator.xml
 
 REM *********************
@@ -60,8 +68,9 @@ IF NOT "%RESULTPATH:~1,1%" == ":" (
   IF NOT "%RESULTPATH:~0,2%" == "\\" SET RESULTPATH=%THISPATH%\%RESULTPATH%
 )
 
+REM Retrieve RUN/PRJ-file path when RUNFILEPATH or MODELPATH are not defined
 IF NOT DEFINED BASE_RUNFILEPATH (
-  IF "%BASE_MODELPATH%" == "" (
+  IF NOT DEFINED BASE_MODELPATH (
     SET BASE_RUNFILEPATH=%RUNFILESPATH%\%BASE_MODELNAME:_=\%\%RUNFILEPREFIX%_%BASE_MODELNAME%.RUN
   ) ELSE (
     SET BASE_RUNFILEPATH=%RUNFILESPATH%\%BASE_MODELPATH%\%RUNFILEPREFIX%_%BASE_MODELNAME%.RUN
@@ -69,35 +78,56 @@ IF NOT DEFINED BASE_RUNFILEPATH (
 )
 
 IF NOT DEFINED MODIFIED_RUNFILEPATH (
-  IF "%MODIFIED_MODELPATH%" == "" (
+  IF NOT DEFINED MODIFIED_MODELPATH (
     SET MODIFIED_RUNFILEPATH=%RUNFILESPATH%\%MODIFIED_MODELNAME:_=\%\%RUNFILEPREFIX%_%MODIFIED_MODELNAME%.RUN
   ) ELSE (
     SET MODIFIED_RUNFILEPATH=%RUNFILESPATH%\%MODIFIED_MODELPATH%\%RUNFILEPREFIX%_%MODIFIED_MODELNAME%.RUN
   )
 )
 
-SET SETTINGSOPTION=
-IF NOT "%SETTINGSFILE%" == "" SET SETTINGSOPTION=/s:"%SETTINGSFILE%"
-
+REM Check for existing RUN/PRJ-file paths and try PRJ instead of RUN
 IF NOT EXIST "%BASE_RUNFILEPATH%" (
-  SET MSG=Specified base RUN-file not found: %BASE_RUNFILEPATH%
-  ECHO !MSG!
-  ECHO !MSG! >> %LOGFILE%
-  GOTO error
+  IF EXIST "%BASE_RUNFILEPATH:.RUN=.PRJ%" (
+    SET BASE_RUNFILEPATH=%BASE_RUNFILEPATH:.RUN=.PRJ%
+  ) ELSE (
+    SET MSG=Specified base RUN/PRJ-file not found: %BASE_RUNFILEPATH%
+    ECHO !MSG!
+    ECHO !MSG! >> %LOGFILE%
+    GOTO error
+  )
 )
 
 IF NOT EXIST "%MODIFIED_RUNFILEPATH%" (
-  SET MSG=Specified modified RUN-file not found: %MODIFIED_RUNFILEPATH%
-  ECHO !MSG!
-  ECHO !MSG! >> %LOGFILE%
-  GOTO error
-
+  IF EXIST "%MODIFIED_RUNFILEPATH:.RUN=.PRJ%" (
+    SET MODIFIED_RUNFILEPATH=%MODIFIED_RUNFILEPATH:.RUN=.PRJ%
+  ) ELSE (
+    SET MSG=Specified modified RUN/PRJ-file not found: %MODIFIED_RUNFILEPATH%
+    ECHO !MSG!
+    ECHO !MSG! >> %LOGFILE%
+    GOTO error
+  )
 )
+
+SET SOPTION=
+SET IOPTION=
+SET COPTION=/c:"%MODIFIED_RUNFILEPATH%"
+IF DEFINED SETTINGSFILE SET SOPTION=/s:"%SETTINGSFILE%"
+IF NOT "%OPENIMOD%%OPENEXCEL%" == "" (
+  IF NOT DEFINED OPENIMOD SET OPENIMOD=0
+  IF NOT DEFINED OPENEXCEL SET OPENEXCEL=0
+  SET IOPTION=/i:%OPENIMOD%,%OPENEXCEL%
+)
+IF NOT "%COMP_IDFMETHOD%%COMP_NODATAVALUE%"=="" (
+  IF NOT DEFINED COMP_IDFMETHOD SET COMP_IDFMETHOD=0
+  SET COPTION=%COPTION%,!COMP_IDFMETHOD!
+  IF DEFINED COMP_NODATAVALUE SET COPTION=!COPTION!,%COMP_NODATAVALUE%
+)
+
 REM Start iMODValidator
 ECHO   starting iMODValidator comparison ...
 ECHO   starting iMODValidator comparison ... >> %LOGFILE%
-ECHO "%IMODVALIDATOREXE%" %SETTINGSOPTION% /c:"%MODIFIED_RUNFILEPATH%" "%BASE_RUNFILEPATH%" "%RESULTPATH%" >> %LOGFILE%
-"%IMODVALIDATOREXE%" %SETTINGSOPTION% /c:"%MODIFIED_RUNFILEPATH%" "%BASE_RUNFILEPATH%" "%RESULTPATH%" >> %LOGFILE%
+ECHO "%IMODVALIDATOREXE%" %SOPTION% %IOPTION% %COPTION% "%BASE_RUNFILEPATH%" "%RESULTPATH%" >> %LOGFILE%
+"%IMODVALIDATOREXE%" %SOPTION% %IOPTION% %COPTION% "%BASE_RUNFILEPATH%" "%RESULTPATH%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 
 REM Check for issues in logfile

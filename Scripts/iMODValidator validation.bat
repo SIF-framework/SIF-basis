@@ -7,7 +7,7 @@ REM * DESCRIPTION                                              *
 REM *   Runs iMODValidator modelvalidation for a RUN/PRJ-file. *
 REM *   iMOD/Excel may be opened automically after validation. *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)                     *
-REM * VERSION: 2.2.0                                           *
+REM * VERSION: 2.2.1                                           *
 REM * MODIFICATIONS                                            *
 REM *   2016-10-01 Initial version                             *
 REM ************************************************************
@@ -24,11 +24,15 @@ REM MODELNAME:    Base modelname as MODELNAME[_SUBMODELNAME[_MODELPOSTFIX]] (wit
 REM MODELPATH:    Path to base modelrunfile, relative path from RUNFILES-folder to RUN-file, do not add last backslash. Leave empty to search default location (RUNFILESPATH\MODELNAME\SUBMODELNAME\MODELPOSTFIX).
 REM RUNFILEPATH:  Full path and filename to RUN-file if MODELNAME is not used. MODELPATH is ignored then.
 REM RESULTPATH:   Path to write results to, e.g. %WORKOUTPATH%\%MODELNAME:_=\%\validation\iMODValidator
+REM OPENIMOD:     Specify if iMOD should be opened with resulting IMF-file after completion 0 = iMOD is NOT opened; 1 = iMOD is opened; or leave both OPENIMOD and OPENEXCEL empty to use XML-settings
+REM OPENEXCEL:    Specify if Excel should be opened with resulting spreadsheet after completion 0 = Excel is NOT opened ; 1 = Excel is opened; or leave both OPENIMOD and OPENEXCEL empty to use XML-settings
 REM SETTINGSFILE: Path to iMODValidator XML-settingsfile, or leave empty to use default settings
-SET MODELNAME=ORG_BAS
+SET MODELNAME=
 SET MODELPATH=
 SET RUNFILEPATH=
-SET RESULTPATH=checks\iMODValidator
+SET RESULTPATH=result\validation
+SET OPENIMOD=1
+SET OPENEXCEL=0
 SET SETTINGSFILE=%SETTINGSPATH%\SIF.Settings.iMODValidator.xml
 
 REM *********************
@@ -59,30 +63,42 @@ IF NOT "%RESULTPATH:~1,1%" == ":" (
 )
 
 IF NOT DEFINED RUNFILEPATH (
-  IF "%MODELPATH%" == "" (
-    SET RUNFILEPATH=%RUNFILESPATH%\%MODELNAME:_=\%\%RUNFILEPREFIX%_%MODELNAME%.RUN
-  ) ELSE (
-    SET RUNFILEPATH=%RUNFILESPATH%\%MODELPATH%\%RUNFILEPREFIX%_%MODELNAME%.RUN
-  )
-) 
+  IF DEFINED MODELNAME (
+    IF "%MODELPATH%" == "" (
+      SET RUNFILEPATH=%RUNFILESPATH%\%MODELNAME:_=\%\%RUNFILEPREFIX%_%MODELNAME%.RUN
+    ) ELSE (
+      SET RUNFILEPATH=%RUNFILESPATH%\%MODELPATH%\%RUNFILEPREFIX%_%MODELNAME%.RUN
+    )
+  ) 
+)
 
-SET SETTINGSOPTION=
-IF NOT "%SETTINGSFILE%" == "" SET SETTINGSOPTION=/s:"%SETTINGSFILE%"
+SET SOPTION=
+SET IOPTION=
+IF DEFINED SETTINGSFILE SET SOPTION=/s:"%SETTINGSFILE%"
+IF NOT "%OPENIMOD%%OPENEXCEL%" == "" (
+  IF NOT DEFINED OPENIMOD SET OPENIMOD=0
+  IF NOT DEFINED OPENEXCEL SET OPENEXCEL=0
+  SET IOPTION=/i:!OPENIMOD!,!OPENEXCEL!
+)
 
 IF DEFINED RUNFILEPATH (
   IF NOT EXIST "%RUNFILEPATH%" (
-    SET MSG=Specified RUN-file not found: %RUNFILEPATH%
-    ECHO !MSG!
-    ECHO !MSG! >> %LOGFILE%
-    GOTO error
+    IF EXIST "%RUNFILEPATH:.RUN=.PRJ%" (
+      SET RUNFILEPATH=%RUNFILEPATH:.RUN=.PRJ%
+    ) ELSE (
+      SET MSG=Specified RUN/PRJ-file not found: %RUNFILEPATH%
+      ECHO !MSG!
+      ECHO !MSG! >> %LOGFILE%
+      GOTO error
+    )
   )
 
   IF EXIST "%TOOLSPATH%\Tee.exe" (
-    ECHO "%IMODVALIDATOREXE%" %SETTINGSOPTION% "%RUNFILEPATH%"  "%RESULTPATH%" >> %LOGFILE%
-    "%IMODVALIDATOREXE%" %SETTINGSOPTION% "%RUNFILEPATH%"  "%RESULTPATH%" | "%TOOLSPATH%\Tee.exe" /a %LOGFILE%
+    ECHO "%IMODVALIDATOREXE%" %SOPTION% %IOPTION% "!RUNFILEPATH!"  "%RESULTPATH%" >> %LOGFILE%
+    "%IMODVALIDATOREXE%" %SOPTION% %IOPTION% "!RUNFILEPATH!"  "%RESULTPATH%" | "%TOOLSPATH%\Tee.exe" /a /e %LOGFILE%
   ) ELSE (
-    ECHO "%IMODVALIDATOREXE%" %SETTINGSOPTION% "%RUNFILEPATH%"  "%RESULTPATH%" >> %LOGFILE%
-    "%IMODVALIDATOREXE%" %SETTINGSOPTION% "%RUNFILEPATH%"  "%RESULTPATH%" >> %LOGFILE%
+    ECHO "%IMODVALIDATOREXE%" %SOPTION% %IOPTION% "!RUNFILEPATH!"  "%RESULTPATH%" >> %LOGFILE%
+    "%IMODVALIDATOREXE%" %SOPTION% %IOPTION% "!RUNFILEPATH!"  "%RESULTPATH%" >> %LOGFILE%
   )
   IF ERRORLEVEL 1 GOTO error
 
@@ -111,11 +127,11 @@ IF DEFINED RUNFILEPATH (
 ) ELSE (
   REM Start iMODValidator in GUI-mode without a RUN-file
   IF EXIST "%TOOLSPATH%\Tee.exe" (
-    ECHO "%IMODVALIDATOREXE%" %SETTINGSOPTION% >> %LOGFILE%
-    "%IMODVALIDATOREXE%" %SETTINGSOPTION% | "%TOOLSPATH%\Tee.exe" /a %LOGFILE%
+    ECHO "%IMODVALIDATOREXE%" %SOPTION% %IOPTION% >> %LOGFILE%
+    "%IMODVALIDATOREXE%" %SOPTION% %IOPTION% | "%TOOLSPATH%\Tee.exe" /a /e %LOGFILE%
   ) ELSE (
-    ECHO "%IMODVALIDATOREXE%" %SETTINGSOPTION% >> %LOGFILE%
-    "%IMODVALIDATOREXE%" %SETTINGSOPTION% 
+    ECHO "%IMODVALIDATOREXE%" %SOPTION% %IOPTION% >> %LOGFILE%
+    "%IMODVALIDATOREXE%" %SOPTION% %IOPTION%
   )
 )
 
