@@ -3,11 +3,11 @@ REM ********************************************
 REM * SIF-basis v2.1.0 (Sweco)                 *
 REM *                                          *
 REM * iMODdel.bat                              *
-REM * DESCRIPTION                              *
+REM * DESCRIPTION                              * 
 REM *   Delete iMOD-files in specified path(s) *
 REM *   selectively (e.g. empty files)         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)     *
-REM * VERSION: 2.0.1                           *
+REM * VERSION: 2.0.2                           *
 REM * MODIFICATIONS                            *
 REM *   2019-08-26 Initial version             *
 REM ********************************************
@@ -71,7 +71,9 @@ IF "%ISNOTRECYCLED%"=="1" SET NOTRECYCLEDOPTION=/b
 IF "%ISRECURSIVE%"=="1" SET RECURSIVEOPTION=/r
 IF NOT "%ZEROMARGIN%"=="" (
   SET ZEROOPTION=/0:%ZEROMARGIN%
-  IF "%ZEROVALUE%"=="" SET ZEROOPTION=/0:%ZEROMARGIN%,%ZEROVALUE%
+  IF DEFINED ZEROVALUE SET ZEROOPTION=/0:%ZEROMARGIN%,%ZEROVALUE%
+) ELSE (
+  IF DEFINED ZEROVALUE SET ZEROOPTION=/0:0,%ZEROVALUE%
 )
 
 FOR %%D IN (%DELETEDPATHS%) DO (
