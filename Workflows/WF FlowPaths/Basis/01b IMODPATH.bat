@@ -59,7 +59,7 @@ REM PORAQT:             Porosity (constant value or IDF-file) for aquitards (use
 REM PORAQF1:            Porosity (constant value or IDF-file) for aquifers (use english decimal seperator for constant value)
 REM PORAQF2:            Optional alternative porosity (constant value or IDF-file) for aquifer of specified modellayers
 REM PORAQF2LAYERS:      Commaseperated list of modellayers with alternative aquifer porosity, or leave empty to skip alternative porosity
-SET NLAY=9
+SET NLAY=1000
 SET BNDIDFFILENAMEBASE=%DBASEPATH%\ORG\BNDcorr\100\BND_L
 SET TOPIDFFILENAMEBASE=%DBASEPATH%\ORG\TOPBOT\TOP_L
 SET BOTIDFFILENAMEBASE=%DBASEPATH%\ORG\TOPBOT\BOT_L

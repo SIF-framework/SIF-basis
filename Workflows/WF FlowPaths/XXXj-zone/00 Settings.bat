@@ -54,7 +54,7 @@ REM PORAQT:             Porosity for aquitards
 REM PORAQF1:            Porosity for normal aquifers
 REM PORAQF2:            Alternative porosity for aquifer layers specified by PORAQF2LAYERS (e.g. for limestone), or leave empty to ignore
 REM PORAQF2LAYERS:      Comma-seperated list with layernumbers of layers that have alternative porosity PORAQT2, or leave empty to ignore
-SET NLAY=9
+SET NLAY=1000
 SET BNDIDFFILENAMEBASE=%DBASEPATH%\ORG\BNDcorr\100\BND_L
 SET TOPIDFFILENAMEBASE=%DBASEPATH%\ORG\TOPBOT\TOP_L
 SET BOTIDFFILENAMEBASE=%DBASEPATH%\ORG\TOPBOT\BOT_L
