@@ -146,20 +146,20 @@ IF "%ISRECURSIVE%"=="1" (
           CALL "%TOOLSPATH%\SIF.iMOD.runsub" :IDFINFO "!IDFFILEPATH!" 3
           IF NOT "!IDFINFO!"=="0" (
             SET SOURCEEXTENT=!IDFINFO!
+            SET TARGETEXTENT=!SOURCEEXTENT!
+            IF DEFINED WINDOW SET TARGETEXTENT=%WINDOW%
+            
             REM For now assume extent is different and file should be scaled
             SET MSGPOSTFIX=(with cellsize %SCALESIZE%, but different extent^) 
 
             REM Compare extents
-            IF DEFINED WINDOW (
-              ECHO   CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "%WINDOW%" >> %LOGFILE%
-              CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "%WINDOW%"
-              IF ERRORLEVEL 1 GOTO error
-              IF "!ISEQUALEXTENT!"=="1" (
-                SET ISIDFCOPIED=1
-                SET MSGPOSTFIX=(with cellsize %SCALESIZE% and equal extent^) 
-              ) 
-            ) ELSE (
+            ECHO   CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "!TARGETEXTENT!" >> %LOGFILE%
+            CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "!TARGETEXTENT!"
+            IF ERRORLEVEL 1 GOTO error
+            
+            IF "!ISEQUALEXTENT!"=="1" (
               SET ISIDFCOPIED=1
+              SET MSGPOSTFIX=(with cellsize %SCALESIZE% and equal extent^) 
             )
           )
         )
@@ -287,12 +287,15 @@ IF "%ISRECURSIVE%"=="1" (
           CALL "%TOOLSPATH%\SIF.iMOD.runsub" :IDFINFO "%SOURCEPATH%\!IDFFILENAME!" 3
           IF NOT "!IDFINFO!"=="0" (
             SET SOURCEEXTENT=!IDFINFO!
+            SET TARGETEXTENT=!SOURCEEXTENT!
+            IF DEFINED WINDOW SET TARGETEXTENT=%WINDOW%
+            
             REM For now assume extent is different and file should be scaled
             SET MSGPOSTFIX=(with cellsize %SCALESIZE%, but different extent^) 
 
             REM Compare extents
-            ECHO   CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "%WINDOW%" >> %LOGFILE%
-            CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "%WINDOW%"
+            ECHO   CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "!TARGETEXTENT!" >> %LOGFILE%
+            CALL :ISEQUALEXTENT "!SOURCEEXTENT!" "!TARGETEXTENT!"
             IF ERRORLEVEL 1 GOTO error
             
             IF "!ISEQUALEXTENT!"=="1" (
