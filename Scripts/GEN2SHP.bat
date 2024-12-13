@@ -6,7 +6,7 @@ REM * GEN2SHP.bat                            *
 REM * DESCRIPTION                            *
 REM *   Convert GEN-file(s) to shapefile(s)  *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.0.2                         *
 REM * MODIFICATIONS                          *
 REM *   2017-05-01 Initial version           *
 REM ******************************************
@@ -46,8 +46,8 @@ FOR %%G IN ("%GENPATH%\%GENFILTER%") DO (
   IF EXIST "%%G" (
     ECHO   processing %%~nxG ...
     ECHO processing %%~nxG ... >> %LOGFILE%
-    ECHO "%TOOLSPATH%\GENSHPconvert.exe" /o "%GENPATH%" "%%~nxG" "%RESULTPATH%" >> %LOGFILE%
-    "%TOOLSPATH%\GENSHPconvert.exe" /o "%GENPATH%" "%%~nxG" "%RESULTPATH%" >> %LOGFILE%
+    ECHO "%TOOLSPATH%\GENSHPconvert.exe" "%GENPATH%" "%%~nxG" "%RESULTPATH%" >> %LOGFILE%
+    "%TOOLSPATH%\GENSHPconvert.exe" "%GENPATH%" "%%~nxG" "%RESULTPATH%" >> %LOGFILE%
     IF ERRORLEVEL 1 GOTO error
     SET /A FILECOUNT=FILECOUNT+1
   )
