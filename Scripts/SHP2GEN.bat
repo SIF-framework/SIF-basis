@@ -6,7 +6,7 @@ REM * SHP2GEN.bat                            *
 REM * DESCRIPTION                            *
 REM *   Converts shapefile(s) to GEN-file(s) *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.1.0                         *
 REM * MODIFICATIONS                          *
 REM *   2018-05-01 Initial version           *
 REM ******************************************
@@ -20,7 +20,9 @@ REM SHPFILTER:   Filter for shapefiles to convert (wildcards * and ? allowed), e
 REM EXTENT:      Extent (llx,lly,urx,ury) or leave empty
 REM ISRECURSIVE: Specify (wih value 1) that subdirectories of input path should be processed recursively 
 REM ISIDRENUM:   Specify (wih value 1) that IDs should be renumbered with integer values (i.e. to fix duplicates IDs)
-REM ISIDCHECKED: Specify (wih value 1) that an  error should be thrown on duplicate IDs in GEN or DAT-file, otherwise duplicates are allowed in GEN-files, and for DAT-files rows with duplicate IDs are ignored
+REM ISIDCHECKED: Specify (wih value 1) that an error should be thrown on duplicate IDs in GEN or DAT-file, otherwise duplicates are allowed in GEN-files, and for DAT-files rows with duplicate IDs are ignored
+REM NULLVALUE:   Optional replacement-value for numeric NULL-values in shapefile. Use '*' to prevent default replacement. Note: ArcMap does NOT display these values correctly, QGIS does.
+REM              Default NULL-values in floating point columns are replaced by NaN; NULL-values in integer coluns are replaced by NULL (which makes it a text column)
 REM RESULTPATH:  Result path for GEN-files
 SET SHPPATH=shapes
 SET SHPFILTER=*.shp
@@ -28,6 +30,7 @@ SET EXTENT=
 SET ISRECURSIVE=0
 SET ISIDRENUM=0
 SET ISIDCHECKED=0
+SET NULLVALUE=
 SET RESULTPATH=result
 
 REM *********************
@@ -41,19 +44,27 @@ REM * Script commands *
 REM *******************
 TITLE SIF-basis: %SCRIPTNAME%
 
-SET MSG=Converting shapefile(s^) '%SHPFILTER%' to GEN-file ...
+SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
+
+SET MSG=  converting shapefile(s^) '%SHPFILTER%' to GEN-file ...
+ECHO %MSG%
+ECHO %MSG% >> %LOGFILE%
+
 SET EXTENTOPTION=
 SET RECURSEOPTION=
 SET IDFIXOPTION=
 SET IDCHECKOPTION=
+SET NULLOPTION=
 IF NOT "%EXTENT%" == "" SET EXTENTOPTION=/c:%EXTENT%
 IF "%ISRECURSIVE%"=="1" SET RECURSEOPTION=/r
 IF "%ISIDRENUM%"=="1" SET IDFIXOPTION=/f
 IF "%ISIDCHECKED%"=="1" SET IDCHECKOPTION=/c
-ECHO "GENSHPconvert.exe" %EXTENTOPTION% %RECURSEOPTION% %IDFIXOPTION% %IDCHECKOPTION% "%SHPPATH%" "%SHPFILTER%" "%RESULTPATH%" >> %LOGFILE%
-"%TOOLSPATH%\GENSHPconvert.exe" %EXTENTOPTION% %IDFIXOPTION% %RECURSEOPTION% %IDCHECKOPTION% "%SHPPATH%" "%SHPFILTER%" "%RESULTPATH%" >> %LOGFILE%
+IF DEFINED NULLVALUE SET NULLOPTION=/null:%NULLVALUE%
+
+ECHO "GENSHPconvert.exe" %EXTENTOPTION% %RECURSEOPTION% %IDFIXOPTION% %IDCHECKOPTION% %NULLOPTION% "%SHPPATH%" "%SHPFILTER%" "%RESULTPATH%" >> %LOGFILE%
+"%TOOLSPATH%\GENSHPconvert.exe" %EXTENTOPTION% %IDFIXOPTION% %RECURSEOPTION% %IDCHECKOPTION% %NULLOPTION% "%SHPPATH%" "%SHPFILTER%" "%RESULTPATH%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 
 ECHO: 
