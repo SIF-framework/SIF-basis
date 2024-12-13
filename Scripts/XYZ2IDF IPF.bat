@@ -13,7 +13,6 @@ REM * MODIFICATIONS                                      *
 REM *   2017-09-26 Initial version                       *
 REM ******************************************************
 CALL :Initialization
-IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
 
 REM ********************
 REM * Script variables *
@@ -220,6 +219,7 @@ REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat
       )
     )
   )
+  IF EXIST "%SETTINGSPATH%\SIF.Settings.iMOD.bat" CALL "%SETTINGSPATH%\SIF.Settings.iMOD.bat"
   IF EXIST "%~dp000 Settings.bat" (
     CALL "%~dp000 Settings.bat"
   ) ELSE (
