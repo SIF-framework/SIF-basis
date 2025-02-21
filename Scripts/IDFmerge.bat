@@ -1,5 +1,5 @@
 @ECHO OFF
-REM ******************************************
+REM *******************************************
 REM * SIF-basis v2.1.0 (Sweco)               *
 REM *                                        *
 REM * IDFmerge.bat                           *
@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Merges values in selected IDF-files  *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
 REM *            Koen Jansen (Sweco)         *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.0.2                         *
 REM * MODIFICATIONS                          *
 REM *   2018-06-09 Initial version           *
 REM ******************************************
@@ -18,7 +18,6 @@ REM * Script variables *
 REM ********************
 REM INPUTPATH:       Input path with IDF- or ASC-files
 REM FILTER:          Filter for input IDF/ASC-file(s) (use wildcards, e.g. *.IDF), or comma seperated list of files in source path
-REM RECURSIVE:       Specify if subdirectories in input path are checked recursively for input files (use 1 for recursion, 0 otherwise)
 REM STATTYPE:        One of min, max, mean or sum (default)
 REM GROUPBY:         Define group-substring for filename, as substring between (one-based) character indices i1 and i2 of filename
 REM                    Valid values for i1 and i2:
@@ -33,7 +32,6 @@ REM ADDPOSTFIX:      Specify (with value 1) that statistical method in output fi
 REM RESULTIDFFILE:   Specify result IDF filename, including (relative) path
 SET INPUTPATH=input
 SET FILTER=*.IDF
-SET RECURSIVE=0
 SET STATTYPE=mean
 SET GROUPBY=
 SET ADDCOUNT=1
@@ -68,7 +66,6 @@ SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
-SET ROPTION=
 SET VOPTION=
 SET GOPTION=
 SET SOPTION=
@@ -78,39 +75,38 @@ SET IOPTION=
 IF DEFINED NODATACALCVALUE SET VOPTION=/v:%NODATACALCVALUE%
 IF DEFINED GROUPBY SET GOPTION=/g:"%GROUPBY%"
 IF DEFINED STATTYPE SET SOPTION=/s:%STATTYPE%
-IF "%RECURSIVE%"=="1" SET ROPTION=/r
 IF "%ADDCOUNT%"=="1" SET COPTION=/c
 IF "%ADDPOSTFIX%"=="1" SET POPTION=/p
 IF "%IGNORENODATA%"=="1" SET IOPTION=/i
 
 REM check if multiple input files have been specified instead of a filter
 IF NOT "%FILTER:,=%"=="%FILTER%" (
-  IF NOT EXIST "%TEMPDIR%\IDFSUM" MKDIR "%TEMPDIR%\IDFSUM"
-  IF EXIST "%TEMPDIR%\IDFSUM\*.*" DEL /F /Q "%TEMPDIR%\IDFSUM\*.*" >> %LOGFILE% 2>&1
+  IF NOT EXIST "%TEMPDIR%\IDFMERGE" MKDIR "%TEMPDIR%\IDFMERGE"
+  IF EXIST "%TEMPDIR%\IDFMERGE\*.*" DEL /F /Q "%TEMPDIR%\IDFMERGE\*.*" >> %LOGFILE% 2>&1
   FOR %%G IN (%FILTER%) DO (
     ECHO   selecting %%G ...
-    ECHO COPY /Y "%INPUTPATH%\%%G" "%TEMPDIR%\IDFSUM" >> %LOGFILE% 2>&1
-    COPY /Y "%INPUTPATH%\%%G" "%TEMPDIR%\IDFSUM" >> %LOGFILE% 2>&1
+    ECHO COPY /Y "%INPUTPATH%\%%G" "%TEMPDIR%\IDFMERGE" >> %LOGFILE% 2>&1
+    COPY /Y "%INPUTPATH%\%%G" "%TEMPDIR%\IDFMERGE" >> %LOGFILE% 2>&1
     IF ERRORLEVEL 1 GOTO error
   )
-  SET INPUTPATH=%TEMPDIR%\IDFSUM
+  SET INPUTPATH=%TEMPDIR%\IDFMERGE
   SET FILTER=*.IDF
   SET FILTERSEL=1
 )
 ECHO:
 
-SET MSG=Running IDFsum with filter '%FILTER%' ...
+SET MSG=Running IDFmerge with filter '%FILTER%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
-ECHO "%TOOLSPATH%\IDFmerge.exe" %ROPTION% %VOPTION% %GOPTION% %SOPTION% %COPTION% %POPTION% %IOPTION% "%INPUTPATH%" "%FILTER%" "%RESULTIDFFILE%" >> %LOGFILE% 
-"%TOOLSPATH%\IDFmerge.exe" %ROPTION% %VOPTION% %GOPTION% %SOPTION% %COPTION% %POPTION% %IOPTION% "%INPUTPATH%" "%FILTER%" "%RESULTIDFFILE%" >> %LOGFILE% 
+ECHO "%TOOLSPATH%\IDFmerge.exe" %VOPTION% %GOPTION% %SOPTION% %COPTION% %POPTION% %IOPTION% "%INPUTPATH%" "%FILTER%" "%RESULTIDFFILE%" >> %LOGFILE% 
+"%TOOLSPATH%\IDFmerge.exe" %VOPTION% %GOPTION% %SOPTION% %COPTION% %POPTION% %IOPTION% "%INPUTPATH%" "%FILTER%" "%RESULTIDFFILE%" >> %LOGFILE% 
 IF ERRORLEVEL 1 GOTO error
 
 IF "%FILTERSEL%"=="1" (
-  IF EXIST "%TEMPDIR%\IDFSUM\*.IDF" DEL /F /Q "%TEMPDIR%\IDFSUM\*.IDF" >> %LOGFILE% 2>&1
+  IF EXIST "%TEMPDIR%\IDFMERGE\*.IDF" DEL /F /Q "%TEMPDIR%\IDFMERGE\*.IDF" >> %LOGFILE% 2>&1
   IF ERRORLEVEL 1 GOTO error
-  RMDIR "%TEMPDIR%\IDFSUM" > NUL 2>&1
+  RMDIR "%TEMPDIR%\IDFMERGE" > NUL 2>&1
   IF ERRORLEVEL 1 GOTO error
   REM try to remove tmp directory, but fail if other files are still present 
   RMDIR "%TEMPDIR%" > NUL 2>&1
