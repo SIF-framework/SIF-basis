@@ -7,7 +7,7 @@ REM * DESCRIPTION                                *
 REM *   Calculates mean from transient IDF-files *
 REM *   with iMOD-batchfunction IDFMEAN.         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)       *
-REM * VERSION: 2.0.1                             *
+REM * VERSION: 2.1.0                             *
 REM * MODIFICATIONS                              *
 REM *   2020-03-30 Initial version               *
 REM **********************************************
@@ -22,7 +22,7 @@ REM * Script variables *
 REM ********************
 REM IDFPATH:     Path to IDF-files
 REM IDFFILTER:   Specify filter for IDF-files to scale, e.g. HEAD*.IDF; do not include year, month, day or layer before or after the wildcard *. This option is activated whenever ILAYER is speci?ed.
-REM CFUNC:       Name of function to apply: MEAN - mean values (equal weighed); MIN - minimum values; MAX maximum values; SUM sum of values per grid cell; PERC percentile value (see PERCVALUE). Default is MEAN.
+REM CFUNC:       Name of function to apply, MEAN: mean values (equal weighed); MIN: minimum values; MAX: maximum values; SUM: sum of values per grid cell; PERC: percentile value (see PERCVALUE). Default is MEAN.
 REM PERCVALUE:   Percentile value, when CFUNC=PERC, e.g. PERCVALUE=50.0 for median values.
 REM ILAYER:      One of more (comma separated) layers to be used in the calculation, or leave empty to process all files as specified by IDFFILTER.
 REM SDATE:       Start date (yyyymmdd) for which IDF-files are used (optional), e.g. SDATE=19980201. This keyword is obligate whenever ILAYER is specified.
@@ -33,8 +33,9 @@ REM ISEL:        Code for the area to be processed: ISEL=1 will compute the enti
 REM GENFNAME:    Path with GEN-filename for polygon(s) for which mean values need to be computed. This keyword is obliged whenever ISEL=2.
 REM IDFNAME:     Path with IDF-filename for which mean values will be computed for those cells in the IDF-file that are not equal to the NoDataValue of that IDF-file. This keyword is compulsory whenever ISEL=3
 REM ISDELRESULT: Specify (with value 1) that all old results should be deleted (to recycle bin) from RESULTPATH 
-REM RESULTPATH:  Name of subdirectory where the scriptresults are stored
-SET IDFPATH=%RESULTSPATH%\AGOR\head
+REM RESULTPATH:  Name of subdirectory where the scriptresults are stored; note a subdir [SDATE-year]-[EDATE-year] is always added automatically
+REM RESULTFILE:  Name of result IDF-file, or leave empty to use iMOD-default ([IDFFILTER]_[CFUNC]_[SDATE]_TO_[EDATE].IDF
+SET IDFPATH=%RESULTSPATH%\BASIS1\head
 SET IDFFILTER=HEAD*.IDF
 SET CFUNC=MEAN
 SET PERCVALUE=50
@@ -46,8 +47,9 @@ SET PERIODS=0104-3009
 SET ISEL=1
 SET GENFNAME= 
 SET IDFNAME=
-SET ISDELRESULT=1
-SET RESULTPATH=result\zomer
+SET ISDELRESULT=0
+SET RESULTPATH=result
+SET RESULTFILE=
 
 REM *********************
 REM * Derived variables *
@@ -58,7 +60,6 @@ SET LOGFILE="%SCRIPTNAME%.log"
 SET THISPATH=%~dp0
 SET INIFILE="%SCRIPTNAME%.INI"
 SET IMODEXE=%IMODEXE%
-REM %EXEPATH%\iMOD\iMOD_V5_1_X64R.exe
 
 REM *******************
 REM * Script commands *
@@ -113,6 +114,7 @@ IF "%ISDELRESULT%"=="1" (
 
 REM Create empty result directory
 IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
+IF ERRORLEVEL 1 GOTO error
 
 REM Log settings
 SET MSG=Starting script '%SCRIPTNAME%' ...
@@ -121,9 +123,20 @@ ECHO %MSG% > %LOGFILE%
 SET MSG=IDFPATH: %IDFPATH%
 ECHO %MSG%
 ECHO %MSG% >> %LOGFILE%
+IF DEFINED RESULTFILE (
+  CD /D "%RESULTPATH%"
+  SET RESULTPATH=!CD!
+  CD /D "%THISPATH%"
+)
+ECHO RESULTPATH: %RESULTPATH%
+
 ECHO:
 
-SET MSG=Calculating %CFUNC%%PERCVALUE% for %SDATE% to %EDATE% ...
+IF /I "%CFUNC%"=="PERC" (
+  SET MSG=Calculating %CFUNC%%PERCVALUE% for %SDATE% to %EDATE% ...
+) ELSE (
+  SET MSG=Calculating %CFUNC% for %SDATE% to %EDATE% ...
+)
 ECHO %MSG%
 ECHO %MSG% >> %LOGFILE%
 
@@ -148,6 +161,13 @@ IF NOT "%IYEAR%"=="" (
   ECHO IYEAR=%IYEAR% >> %INIFILE%
 )
 
+REM Retrieve start- and end year for result subdirectory name
+SET SYEAR=%SDATE:~0,4%
+SET EYEAR=%EDATE:~0,4%
+SET YEARSUBDIR=!SYEAR!-!EYEAR!
+
+IF NOT EXIST "%RESULTPATH%\!YEARSUBDIR!" MKDIR "%RESULTPATH%\!YEARSUBDIR!" >> %LOGFILE%
+
 REM Write periods if defined
 IF NOT "%PERIODS%"=="" (
   SET NPERIOD=0
@@ -171,46 +191,56 @@ IF NOT "%ISEL%"=="" (
     ECHO IDFNAME=%IDFNAME% >> %INIFILE%
   )
 )
+IF DEFINED RESULTFILE ECHO OUTFILE=%RESULTPATH%\%YEARSUBDIR%\%RESULTFILE% >> %INIFILE%
 
+REM Start iMOD
 ECHO "%IMODEXE%" %INIFILE% >> %LOGFILE%
 "%IMODEXE%" %INIFILE% >> %LOGFILE%
 
-REM Check for and copy results
-SET SYEAR=%SDATE:~0,4%
-SET EYEAR=%EDATE:~0,4%
-SET YEARFILTER=!SYEAR!*!EYEAR!
-SET YEARSUBDIR=!SYEAR!-!EYEAR!
-SET RESULTFILTER=!IDFFILTER:.IDF=!%CFUNC%*!YEARFILTER!*.IDF
-
-IF EXIST "%IDFPATH%\!RESULTFILTER!" (
-  REM Copy iMOD output to resultpath
+REM If no RESULTFILE was specified, iMOD leaves result in input path; copy results to result path
+IF NOT DEFINED RESULTFILE (  
   SET MSG=Copying results to '%RESULTPATH%\!YEARSUBDIR!' ...
   ECHO !MSG!
   ECHO !MSG! >> %LOGFILE%
-  FOR %%D IN ("%IDFPATH%\!RESULTFILTER!") DO (
-    ECHO   %%~nxD
-  )
-  IF NOT EXIST "%RESULTPATH%\!YEARSUBDIR!" MKDIR "%RESULTPATH%\!YEARSUBDIR!" >> %LOGFILE%
-  IF ERRORLEVEL 1 GOTO error
-  ECHO COPY "%IDFPATH%\%RESULTFILTER%" "%RESULTPATH%\!YEARSUBDIR!" >> %LOGFILE%
-  COPY "%IDFPATH%\%RESULTFILTER%" "%RESULTPATH%\!YEARSUBDIR!" >> %LOGFILE%
-  IF ERRORLEVEL 1 GOTO error
-  IF NOT EXIST "%RESULTPATH%\!YEARSUBDIR!\!RESULTFILTER!" GOTO error
 
-  FOR %%G IN ("%RESULTPATH%\!YEARSUBDIR!\!RESULTFILTER!") DO (
-    ECHO   creating metadata for %%~nxG ...
-    ECHO   creating metadata for %%~nxG ... >> %LOGFILE%
-    ECHO   "iMODmetadata.exe" /o "%RESULTPATH%\!YEARSUBDIR!\%%~nG.MET" "" "" 1 "%MODELREF0%" "%CFUNC% layer(s) %ILAYER%, %SDATE%-%EDATE%/%PERIODS%" "%CONTACTORG%" IDF "" "" ="%IDFPATH%\!IDFFILTER!" "See !THISPATH:%ROOTPATH%\=!%~nx0; iMOD-batchfunction IDFMEAN(CFUNC=%CFUNC%, ILAYER=%ILAYER%, %SDATE%-%EDATE%/%PERIODS%); iMOD: !iMODEXE:%ROOTPATH%\=!" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" "%CONTACTEMAIL%" >> %LOGFILE%
-    "%TOOLSPATH%\iMODmetadata.exe" /o "%RESULTPATH%\!YEARSUBDIR!\%%~nG.MET" "" "" 1 "%MODELREF0%" "%CFUNC% layer(s) %ILAYER%, %SDATE%-%EDATE%/%PERIODS%" "%CONTACTORG%" IDF "" "" ="%IDFPATH%\!IDFFILTER!" "See !THISPATH:%ROOTPATH%\=!%~nx0; iMOD-batchfunction IDFMEAN(CFUNC=%CFUNC%, ILAYER=%ILAYER%, %SDATE%-%EDATE%/%PERIODS%); iMOD: !iMODEXE:%ROOTPATH%\=!" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" "%CONTACTEMAIL%" >> %LOGFILE%
+  SET YEARFILTER=!SYEAR!*!EYEAR!
+  SET RESULTFILTER=!IDFFILTER:.IDF=!%CFUNC%*!YEARFILTER!*.IDF
+
+  IF EXIST "%IDFPATH%\%CFUNC%\!RESULTFILTER!" (
+    ECHO COPY "%IDFPATH%\%CFUNC%\%RESULTFILTER%" "%RESULTPATH%\!YEARSUBDIR!" >> %LOGFILE%
+    COPY "%IDFPATH%\%CFUNC%\%RESULTFILTER%" "%RESULTPATH%\!YEARSUBDIR!" >> %LOGFILE%
     IF ERRORLEVEL 1 GOTO error
+    IF NOT EXIST "%RESULTPATH%\!YEARSUBDIR!\!RESULTFILTER!" GOTO error
+  ) ELSE (
+    SET MSG=No results found: "%IDFPATH%\!RESULTFILTER!"
+    ECHO !MSG!
+    ECHO !MSG! >> %LOGFILE%
+    GOTO error
   )
 ) ELSE (
-  SET MSG=No results found: "%IDFPATH%\!RESULTFILTER!"
-  ECHO !MSG!
-  ECHO !MSG! >> %LOGFILE%
-  GOTO error
+  SET RESULTFILTER=%RESULTFILE:.IDF=%*.IDF
 )
+
+SET MSG=Listing result files in '%RESULTPATH%\!YEARSUBDIR!\!RESULTFILTER!' ...
+ECHO !MSG!
+ECHO !MSG! >> %LOGFILE%
+FOR %%D IN ("%RESULTPATH%\!YEARSUBDIR!\!RESULTFILTER!") DO (
+  ECHO   %%~nxD
+  ECHO   %%~nxD >> %LOGFILE%
+)
+IF ERRORLEVEL 1 GOTO error
+
 REM IF EXIST %INIFILE% DEL %INIFILE%
+
+REM Add metadata
+ECHO Adding metadata ...
+ECHO Adding metadata ... >> %LOGFILE%
+FOR %%G IN ("%RESULTPATH%\!YEARSUBDIR!\!RESULTFILTER!") DO (
+  ECHO   "iMODmetadata.exe" /o "%RESULTPATH%\!YEARSUBDIR!\%%~nG.MET" "" "" 1 "%MODELREF0%" "%CFUNC% layer(s) %ILAYER%, %SDATE%-%EDATE%/%PERIODS%" "%CONTACTORG%" IDF "" "" ="%IDFPATH%\!IDFFILTER!" "See !THISPATH:%ROOTPATH%\=!%~nx0; iMOD-batchfunction IDFMEAN(CFUNC=%CFUNC%, ILAYER=%ILAYER%, %SDATE%-%EDATE%/%PERIODS%); iMOD: !iMODEXE:%ROOTPATH%\=!" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" "%CONTACTEMAIL%" >> %LOGFILE%
+  "%TOOLSPATH%\iMODmetadata.exe" /o "%RESULTPATH%\!YEARSUBDIR!\%%~nG.MET" "" "" 1 "%MODELREF0%" "%CFUNC% layer(s) %ILAYER%, %SDATE%-%EDATE%/%PERIODS%" "%CONTACTORG%" IDF "" "" ="%IDFPATH%\!IDFFILTER!" "See !THISPATH:%ROOTPATH%\=!%~nx0; iMOD-batchfunction IDFMEAN(CFUNC=%CFUNC%, ILAYER=%ILAYER%, %SDATE%-%EDATE%/%PERIODS%); iMOD: !iMODEXE:%ROOTPATH%\=!" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" "%CONTACTEMAIL%" >> %LOGFILE%
+  IF ERRORLEVEL 1 GOTO error
+)
+ECHO: 
 
 :success
 SET MSG=Script finished, see "%~n0.log"
