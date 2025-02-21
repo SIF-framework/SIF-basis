@@ -25,7 +25,7 @@ REM Resulting IDF-file(s) will get the extent of the zone IDF-file and the cells
 REM ********************
 REM * Script variables *
 REM ********************
-REM VALUEIDFPATH :  Path to diectory with IDF-file(s) with known values
+REM VALUEIDFPATH :  Path to directory with IDF-file(s) with known values
 REM VALUEIDFFILTER: Filter for IDF-file(s) in VALUEIDFPATH with known values to process
 REM ZONEIDFFILE:    Zone IDF-file to define cells to be resampled as all data-cells (values different from NoData or zero). Each different zone value is resampled individually.
 REM RESAMPLEMETHOD: Use one of the following values for a corresponding resample method:
@@ -44,7 +44,7 @@ REM                 6: percentile in zone values, with RESAMPLEPAR1 an integer (
 REM                    with methods 2-5 all cells in each zone are overwritten with the calculated statistic.
 REM                 Note: it is advised to specify a zone IDF-file via option z to define resampled cells; when no zone is 
 REM                       defined, a single zone is created with NoData-cells for method 1-2 and with Data-cells for methods 3-6
-REM RESAMPLEPARi:   Parameters that define resampling, based on specifc method. RESAMPLEPAR1
+REM RESAMPLEPARi:   Parameters that define resampling, based on specific method. RESAMPLEPAR1
 REM SKIPDIAGONALS:  Specify (with value 1) if neighbors should not be searched diagonally (only horizontally and vertically)
 REM RESULTPATH:     Path for resulting IDF-file(s) or filename of resulting IDF-file when a single value IDF-file was specified
 SET VALUEIDFPATH=tmp
