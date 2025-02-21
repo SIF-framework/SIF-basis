@@ -82,7 +82,7 @@ IF "%HASTOPLEVELSCRIPT%"=="1" (
 )
 
 REM Check if warning needs to be shown and script should be paused
-IF "%ISTOPLEVELSCRIPT%"=="1" (
+IF "%ISTOPLEVELSCRIPT%"=="1" IF NOT "%ISLOWLEVELSCRIPT%"=="1" (
   ECHO Started script '%RUNSCRIPTNAME%' in: %CD%
   ECHO:
   
