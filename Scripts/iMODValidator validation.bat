@@ -7,7 +7,7 @@ REM * DESCRIPTION                                              *
 REM *   Runs iMODValidator modelvalidation for a RUN/PRJ-file. *
 REM *   iMOD/Excel may be opened automically after validation. *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)                     *
-REM * VERSION: 2.2.1                                           *
+REM * VERSION: 2.2.2                                           *
 REM * MODIFICATIONS                                            *
 REM *   2016-10-01 Initial version                             *
 REM ************************************************************
