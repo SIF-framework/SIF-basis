@@ -16,6 +16,7 @@ REM ********************
 REM * Script variables *
 REM ********************
 REM WORKINPATH:     Path to WORKIN subdirectory to create WorkflowViz-graphs for
+REM FILELISTPATHS:  Comma-seperated list paths to add in Excelsheet with file properties; surround with double quotes if paths contain spaces
 REM EXCLUDESTRINGS: Comma-seperated list of strings in subdirectories or filenames to exclude
 REM WORKFLOWORDER:  Comma-seperated substrings that define workflow (partial) order (e.g. BASISDATA to ensure that if comes first, BASIS0)
 REM VISUALIZELEVEL: Visualization level: maximum number of workflow levels to show in one diagram, or leave empty for default (2)
@@ -25,8 +26,8 @@ REM ISTOPLEVBATCH:  Specify (with value 1) if batchfiles should be shown for the
 REM SKIPEDGECHECK:  Specify (with value 1) if check for order inconsistencies of batchfiles and subworkflows should be skipped (and not visualized with a red arrow), or leave empty to check ordering
 REM ISRESULTSHOWN:  Specify (with value 1) if result should be shown after succesful run, or leave empty to skip
 REM RESULTPATH:     Path to write results
-SET WORKINPATH=
-SET EXCLUDESTRINGS=
+SET WORKINPATH=%WORKINPATH%
+SET FILELISTPATHS="%BASISDATAPATH%","%EXEPATH%"
 SET WORKFLOWORDER=BASISDATA,ORG
 SET VISUALIZELEVEL=2
 SET RECURSIONLEVEL=2
@@ -39,7 +40,7 @@ SET RESULTPATH=results
 REM WORKFLOWVIZEXE: Path to WorkflowViz.exe, absolute or relative to the location of this batchfile
 REM DOTEXE:         Path to dot.exe, absolute or relative to path with WorkflowViz executable
 REM DOTOPTIONS:     Specify command-line options to run dot.exe, use full substring of command-line for dot.exe, e.g. -Gdpi=300. Check dot manual for all options. Do not add double quotes around options string.
-SET WORKFLOWVIZEXE=Bin\WorkflowViz.exe
+SET WORKFLOWVIZEXE=%TOOLSPATH%\WorkflowViz\WorkflowViz.exe
 SET DOTEXE=graphviz-2.49.1\dot.exe
 SET DOTOPTIONS=
 
@@ -87,20 +88,22 @@ SET RMOPTION=
 SET BTOPTION=
 SET SEOPTION=
 SET OROPTION=
+SET FLOPTION=
 SET DOTOPTION=
 SET DOTEXEOPTION=
 IF DEFINED EXCLUDESTRINGS SET EXOPTION=/ex:%EXCLUDESTRINGS%
 IF DEFINED WORKFLOWORDER SET WOOPTION=/wo:%WORKFLOWORDER%
 IF DEFINED RECURSIONLEVEL SET RLOPTION=/rl:%RECURSIONLEVEL%
 IF DEFINED VISUALIZELEVEL SET VLOPTION=/vl:%VISUALIZELEVEL%
+IF DEFINED FILELISTPATHS SET FLOPTION=/fl:%FILELISTPATHS%
 IF "%RUNSCRIPTMODE%"=="1" SET RMOPTION=/rm
 IF "%ISTOPLEVBATCH%"=="1" SET BTOPTION=/bt
 IF "%SKIPEDGECHECK%"=="1" SET SEOPTION=/se
 IF "%ISRESULTSHOWN%"=="1" SET OROPTION=/or
 IF DEFINED DOTOPTIONS SET DOTOPTION=/do:"%DOTOPTIONS%"
 IF DEFINED DOTEXE SET DOTEXEOPTION=/dot:"%DOTEXE%"
-ECHO "%WORKFLOWVIZEXE%" %OROPTION% %VLOPTION% %RLOPTION% %RMOPTION% %BTOPTION% %EXOPTION% %SEOPTION% %WOOPTION% %DOTEXEOPTION% %DOTOPTION% "%WORKINPATH%" "%RESULTPATH%" >> %LOGFILE%
-"%WORKFLOWVIZEXE%" %OROPTION% %VLOPTION% %RLOPTION% %RMOPTION% %BTOPTION% %EXOPTION% %SEOPTION% %WOOPTION% %DOTEXEOPTION% %DOTOPTION% "%WORKINPATH%" "%RESULTPATH%" >> %LOGFILE%
+ECHO "%WORKFLOWVIZEXE%" %OROPTION% %VLOPTION% %FLOPTION% %RLOPTION% %RMOPTION% %BTOPTION% %EXOPTION% %SEOPTION% %WOOPTION% %DOTEXEOPTION% %DOTOPTION% "%WORKINPATH%" "%RESULTPATH%" >> %LOGFILE%
+"%WORKFLOWVIZEXE%" %OROPTION% %VLOPTION% %FLOPTION% %RLOPTION% %RMOPTION% %BTOPTION% %EXOPTION% %SEOPTION% %WOOPTION% %DOTEXEOPTION% %DOTOPTION% "%WORKINPATH%" "%RESULTPATH%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 
 :success
@@ -120,9 +123,65 @@ REM Set errorlevel for higher level scripts
 CMD /C "EXIT /B 1"
 GOTO exit
 
-REM FUNCTION: Intialize script. To use: "CALL :Initialization", without arguments
+REM FUNCTION: Intialize script and search/call SETTINGS\SIF.Settings.Project.bat and "00 settings.bat'. To use: "CALL :Initialization", without arguments
 :Initialization
   COLOR 70
+  IF EXIST "%~dp0..\SETTINGS\SIF.Settings.Project.bat" (
+    CALL "%~dp0..\SETTINGS\SIF.Settings.Project.bat"
+  ) ELSE (
+    IF EXIST "%~dp0..\..\SETTINGS\SIF.Settings.Project.bat" (
+      CALL "%~dp0..\..\SETTINGS\SIF.Settings.Project.bat"
+    ) ELSE (
+      IF EXIST "%~dp0..\..\..\SETTINGS\SIF.Settings.Project.bat" (
+        CALL "%~dp0..\..\..\SETTINGS\SIF.Settings.Project.bat"
+      ) ELSE (
+        IF EXIST "%~dp0..\..\..\..\SETTINGS\SIF.Settings.Project.bat" (
+          CALL "%~dp0..\..\..\..\SETTINGS\SIF.Settings.Project.bat"
+        ) ELSE (
+          IF EXIST "%~dp0..\..\..\..\..\SETTINGS\SIF.Settings.Project.bat" (
+            CALL "%~dp0..\..\..\..\..\SETTINGS\SIF.Settings.Project.bat"
+          ) ELSE (
+            IF EXIST "%~dp0..\..\..\..\..\..\SETTINGS\SIF.Settings.Project.bat" (
+              CALL "%~dp0..\..\..\..\..\..\SETTINGS\SIF.Settings.Project.bat"
+            ) ELSE (
+              ECHO SETTINGS\SIF.Settings.Project.bat could not be found in the six parent directories!
+              REM Set errorlevel for higher level scripts
+              CMD /C "EXIT /B 1"
+            )
+          )
+        )
+      )
+    )
+  )
+  IF EXIST "%~dp000 Settings.bat" (
+    CALL "%~dp000 Settings.bat"
+  ) ELSE (
+    IF EXIST "%~dp0..\00 Settings.bat" (
+      CALL "%~dp0..\00 Settings.bat"
+    ) ELSE (
+      IF EXIST "%~dp0..\..\00 Settings.bat" (
+        CALL "%~dp0..\..\00 Settings.bat"
+      ) ELSE (
+        IF EXIST "%~dp0..\..\..\00 Settings.bat" (
+          CALL "%~dp0..\..\..\00 Settings.bat"
+        ) ELSE (
+          IF EXIST "%~dp0..\..\..\..\00 Settings.bat" (
+            CALL "%~dp0..\..\..\..\00 Settings.bat"
+          ) ELSE (
+            IF EXIST "%~dp0..\..\..\..\..\00 Settings.bat" (
+              CALL "%~dp0..\..\..\..\..\00 Settings.bat"
+            ) ELSE (
+              IF EXIST "%~dp0..\..\..\..\..\..\00 Settings.bat" (
+                CALL "%~dp0..\..\..\..\..\..\00 Settings.bat"
+              ) ELSE (
+                REM Higher level settings file not found, ignore
+              )
+            )
+          )
+        )
+      )
+    )
+  )
   GOTO:EOF
 
 :exit
