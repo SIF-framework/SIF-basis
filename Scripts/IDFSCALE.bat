@@ -26,7 +26,7 @@ REM WEIGHFACTOR:  Weight factor, optional in SCLTYPE_UP (types 1,3,4,5,6,9), the
 REM PERCENTILE:   Percentile (between 0.0 and 1.0) in case of SCLTYPE_UP=9, otherwise leave empty
 REM BLOCK:        Size of interpolation block, optional for SCLTYPE_DOWN=1. Possible values: 4,16,36,64,100. Matrices of BLOCKxBLOCK are used for interpolation of each point.
 REM WINDOW:       Extent of the modelboundary (llx,lly,urx,ury or llx lly urx ury), or leave empty to keep current extent
-REM ISCOPYOTHER:  Use value 1 to copy non IDF-files, or leave empty to skip other files
+REM ISCOPYOTHER:  Use value 1 to copy non IDF-files in SOURCEPATH, or leave empty to skip other files
 REM RESULTPATH:   Path to (sub)directory where scriptresults are stored
 REM RESULTFILE:   Filename of result file when a single source file has been specified, otherwise leave empty
 SET SOURCEPATH=%DBASEPATH%\ORG\KHV\25
@@ -240,8 +240,7 @@ IF "%ISRECURSIVE%"=="1" (
     ECHO Copying other files (non-IDF^) recursively ...
     FOR /R "%SOURCEPATH%" %%G IN (*) DO (
       SET FILEEXT=%%~xG
-      IF "!FILEEXT!"==".idf" SET FILEEXT=.IDF
-      IF NOT "!FILEEXT!"==".IDF" (
+      IF /I NOT "!FILEEXT!"==".IDF" (
         SET FILENAME=%%~nxG
         SET FULLFILENAME=%%G
         SET FILEPATH=%%~dpG
@@ -380,8 +379,7 @@ IF "%ISRECURSIVE%"=="1" (
     ECHO Copying other files (non-IDF^) recursively ...
     FOR %%G IN ("%SOURCEPATH%\*") DO (
       SET FILEEXT=%%~xG
-      IF "!FILEEXT!"==".idf" SET FILEEXT=.IDF
-      IF NOT "!FILEEXT!"==".IDF" (
+      IF /I NOT "!FILEEXT!"==".IDF" (
         SET FILENAME=%%~nxG
         SET FULLFILENAME=%%G
         SET FILEPATH=%%~dpG
