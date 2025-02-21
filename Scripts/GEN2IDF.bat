@@ -6,7 +6,7 @@ REM * GEN2IDF.bat                            *
 REM * DESCRIPTION                            * 
 REM *   Convert GEN-file(s) to IDF-file(s)   *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.0.2                         *
 REM * MODIFICATIONS                          *
 REM *   2018-09-12 Initial version           *
 REM ******************************************
@@ -26,7 +26,10 @@ REM                    METHODPAR1: columnnumber (one-based) in DAT-file, with va
 REM                    METHODPAR2: defines method for checking overlap with cells: 1) cell center inside polygon; 2) calculate overlap of polygon in cell (slower)
 REM                  - METHODPAR3: method for cellvalue/area when multiple polygons intersect cell: 
 REM                                1) first (default); 2) min; 3) max; 4) sum; 5) largest cellarea (value/area of polygon with largest area in cell (or first value for equal areas)
-REM                                6) weighted average (with weight defined by polygon area in cell); 7: smallest cellarea; 8: largest (polygon)area; 9: smalles (polygon)area; 10: last
+REM                                6) weighted average (with weight defined by polygon area in cell); 7: smallest cellarea; 8: largest (polygon)area; 9: smallest (polygon)area; 10: last
+REM                  - METHODPAR4: method for aligning grid extent and cellsize:
+REM                                0) do not snap extent (but a warning is given for mismatch with cellsize); 1) snap (enlarged) extent to (multiple) of cellsize (default), size can increase;
+REM                                2) snap extent to (multiple) of cellsize (extent can be corrected for cellsize), if original size is multiple of cellsize, resulting size will not increase
 REM CELLSIZE:       Cellsize for resulting IDF-grid
 REM SKIPPEDVALUES:  Specify commaseperated list of values si, or ranges (s1-s2) to skip in input files
 REM ISANGLEADDED:   Specify (with value 1) if a seperate IDF-file with angles for each cel with a GEN-line part should be added
@@ -40,6 +43,7 @@ SET GENFILTER=*.GEN
 SET METHODPAR1=1
 SET METHODPAR2=2
 SET METHODPAR3=9
+SET METHODPAR4=
 SET CELLSIZE=100
 SET SKIPPEDVALUES=-9999
 SET ISANGLEADDED=0
@@ -81,6 +85,9 @@ IF DEFINED METHODPAR1 (
     SET GRIDOPTION=!GRIDOPTION!,%METHODPAR2%
     IF DEFINED METHODPAR3 (
       SET GRIDOPTION=!GRIDOPTION!,%METHODPAR3%
+	  IF DEFINED METHODPAR4 (
+		SET GRIDOPTION=!GRIDOPTION!,%METHODPAR4%
+	  )
     )
   )
 )
