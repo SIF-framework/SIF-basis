@@ -6,7 +6,7 @@ REM * IDF2GEN.bat                            *
 REM * DESCRIPTION                            *
 REM *   Convertd IDF-file(s) to GEN-file(s)  *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.2                         *
+REM * VERSION: 2.0.3                         *
 REM * MODIFICATIONS                          *
 REM *   2018-09-12 Initial version           *
 REM ******************************************
@@ -48,8 +48,6 @@ REM *******************
 SETLOCAL EnableDelayedExpansion
 
 TITLE SIF-basis: %SCRIPTNAME%
-
-IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
 
 SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
