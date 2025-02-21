@@ -7,7 +7,7 @@ REM * DESCRIPTION                             *
 REM *    Selects IFF-pathlines inside/outside *
 REM *    specified volume and/or period       *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)    *
-REM * VERSION: 2.0.1                          *
+REM * VERSION: 2.0.2                          *
 REM * MODIFICATIONS                           *
 REM *   2018-09-01 Initial version            *
 REM *   2024-01-12 Cleanup, move to SIF-basis *
@@ -28,7 +28,7 @@ REM * Script variables *
 REM ********************
 REM IFFPATH: Path to input IFF-file(s)
 REM IFFFILE: Filter or filename for input IFF-file(s)
-SET IFFPATH=postprocessing
+SET IFFPATH=result\runs\ZONE_FW
 SET IFFFILE=REF3_BAS_FW_HEAD_L1.IFF
 
 REM Specify clip/select-volume with a combination of GEN-file, extent, TOP/BOT-level and/or traveltime
@@ -45,14 +45,14 @@ SET GENFILE=%SHAPESPATH%\Oppervlaktewater\PlasX.GEN
 SET TOPLEVEL=%DBASEPATH%\ORG\TOP\TOP_L1.IDF
 SET BOTLEVEL=%DBASEPATH%\ORG\BOT\BOT_L3.IDF
 SET EXTENT=
-SET REVERSETIME=2
-SET MINTRAVELTIME=0
-SET MAXTRAVELTIME=%FPFW_SEL_MAXY%
+SET REVERSETIME=
+SET MINTRAVELTIME=
+SET MAXTRAVELTIME=
 SET MINVELOCITY=
 SET MAXVELOCITY=
 
-REM Specify etiher CLIPMETHOD or SELECTTYPE/SELECTMETHOD that defines the IFF-line to select, related to the specified volume
-REM CLIPMETHOD:    Clip IFF-pathlines as defined by the selection volume and one of the following CLIPMETHOD values:
+REM Specify either CLIPTYPE or SELECTTYPE/SELECTMETHOD that defines the IFF-line to select, related to the specified volume
+REM CLIPTYPE:      Clip IFF-pathlines as defined by the selection volume and one of the following CLIPTYPE values:
 REM                  0) select all pathlines
 REM                  1) select only pathlines inside the specified volume (clip, the default)
 REM                  2) select only pathlines outside the specified volume (inverse clip)
@@ -64,17 +64,17 @@ REM                  1) evaluate only IFF-points that start inside/outside the s
 REM                  2) evaluate only IFF-points, that pass through/outside the specified volume (midpoints)
 REM                  3) evaluate only IFF-points that end inside/outside the specified volume
 REM                  4) evaluate all IFF-points
-REM                Note: if one IFF-point is inside/outside the specified volume, the whole pathline is selected:
-REM SELECTMETHOD: Specify the selection method or constraint for specified SELECTTYPE, or leave empty for default (1):
+REM                  Note: if one IFF-point is inside/outside the specified volume, the whole pathline is selected
+REM SELECTMETHOD:  Specify the selection method or constraint for specified SELECTTYPE, or leave empty for default (1):
 REM                  1) evaluate only specified IFF-points inside the specified volume (the default)
 REM                  2) evaluate only specified IFF-points outside the specified volume
-SET CLIPMETHOD=3
+SET CLIPTYPE=1
 SET SELECTTYPE=
 SET SELECTMETHOD=
 
 REM RESULTPATH: Result path or filename output IFF-file. If no filename is specified the source name with postfix _sel is used.
 REM POSTFIX:    Optional postfix to add to outputfilenames    
-SET RESULTPATH=result\%FLOWLINE_PREFIX%%TYPESTRING%_FW_%MODELREF%_%SOURCEABBR%.IFF
+SET RESULTPATH=result\runs
 SET POSTFIX=_sel
 
 REM *********************
@@ -94,9 +94,9 @@ SET MSG=Starting script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
-IF DEFINED CLIPMETHOD IF DEFINED SELECTTYPE (
-  ECHO Specify either CLIPMETHOD or SELECTTYPE/SELECTMETHOD, not both^^!
-  ECHO Specify either CLIPMETHOD or SELECTTYPE/SELECTMETHOD, not both^^! >> %LOGFILE%
+IF DEFINED CLIPTYPE IF DEFINED SELECTTYPE (
+  ECHO Specify either CLIPTYPE or SELECTTYPE/SELECTMETHOD, not both^^!
+  ECHO Specify either CLIPTYPE or SELECTTYPE/SELECTMETHOD, not both^^! >> %LOGFILE%
   GOTO error
 )
 
@@ -109,13 +109,13 @@ SET METHODOPTION=
 SET REVERSEOPTION=
 SET PFOPTION=
 IF NOT "%EXTENT%"=="" SET EXTENTOPTION=/e:%EXTENT%
-IF NOT "%GENFILE%"=="" SET GENFILEOPTION=/p:%GENFILE%
+IF NOT "%GENFILE%"=="" SET GENFILEOPTION=/p:"%GENFILE%"
 IF NOT "%TOPLEVEL%%BOTLEVEL%"=="" SET LEVELOPTION=/l:"%TOPLEVEL%","%BOTLEVEL%"
 IF DEFINED REVERSETIME SET REVERSEOPTION=/r:%REVERSETIME%
 IF NOT "%MINTRAVELTIME%%MAXTRAVELTIME%"=="" SET TOPTION=/t:%MINTRAVELTIME%,%MAXTRAVELTIME%
 IF NOT "%MINVELOCITY%%MAXVELOCITY%"=="" SET VOPTION=/v:%MINVELOCITY%,%MAXVELOCITY%
-IF DEFINED CLIPMETHOD (
-  SET METHODOPTION=/c:%CLIPMETHOD%
+IF DEFINED CLIPTYPE (
+  SET METHODOPTION=/c:%CLIPTYPE%
 ) ELSE (
   IF DEFINED SELECTTYPE (
     IF DEFINED SELECTMETHOD (
@@ -125,7 +125,7 @@ IF DEFINED CLIPMETHOD (
     )
   )
 )
-IF DEFINED POSTFIX SET PFOPTION=/pf:%PFOPTION%
+IF DEFINED POSTFIX SET PFOPTION=/pf:%POSTFIX%
 
 SET MSG=Selecting pathlines ...
 ECHO   %MSG%
