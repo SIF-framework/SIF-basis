@@ -6,7 +6,7 @@ REM * IPFselect.bat                          *
 REM * DESCRIPTION                            * 
 REM *   Selects points from IPF-file(s)      *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.1.0                         *
+REM * VERSION: 2.2.2                         *
 REM * MODIFICATIONS                          *
 REM *   2020-01-17 Initial version           *
 REM ******************************************
@@ -30,21 +30,29 @@ REM GENFILE:      GEN-file for definition of clip/select-volume, or leave empty
 REM TOPLEVEL:     TOP-level IDF-file or values (floating point, english notation) for definition of clip/select-volume, or leave empty
 REM BOTLEVEL:     BOT-level IDF-file or values (floating point, english notation) for definition of clip/select-volume, or leave empty
 REM EXTENT:       Extent (xll,yll,xur,yur) for definition of clip/select-volume, or leave empty
-REM VOLUMEMETHOD: Method for selection volume: 1) inside specified volume, 2) outside specified volume, or leave empty for default: inside
 SET GENFILE=
 SET TOPLEVEL=
 SET BOTLEVEL=
 SET EXTENT=
-SET VOLUMEMETHOD=1
 
 REM --- Define optional column expression for selection and/or for changing selected values with ---
 REM EXPCOL:       For logical expression: specify (one-based) column number or name of column to evaluate. Note: columnvalues are checked to determine type. Inconsistencies or a single empty string will result in type 'string'.
 REM EXPOP:        For logical expression: specify logical operator: eq, gt, gteq, lt, lteq, uneq. Note: gt, gteq, lt and lteq might behave unexpected for string type comparisons, which is based on (ordinal) alphabetical order.
 REM EXPVAL:       For logical expression: specify (string, integer, double, DateTime) value to compare with. Leave empty for empty string.
-REM CHANGE_EXPS:  One or more column expressions, seperated by commas, for modifying columns of selected rows and copy other rows, or leave empty to copy only selected rows. E.g. 3,*2.5,NaN;TOP,-1
-REM               Each column/exp-definition is specified by 'c,e,n', where:
-REM                'c' is a (one based) column index or a column name. If a column name is not found it is added, where non-selected points will receive an empty string as a value.
-REM                'e' is a constant value or a simple expression, defined as operator and value. Valid operators are: *, /, + and -.
+REM CHANGE_EXPS:  One or more column/exp-definitions, seperated by commas, for modifying columns of selected rows and copy other rows, or leave empty to copy only selected rows. E.g. 3;*2.5;NaN,TOP;-1
+REM               Each column/exp-definition is specified by 'c;e;n', where:
+REM                'c' is a (one based) column number or a column name. If a column name is not found it is added, where non-selected points will receive an empty string as a value.
+REM                'e' is a constant value, a mathetical expression or a string expression:
+REM                    - a mathemetical expression is defined as an operator and value; valid operators are: '*', '/', '+' and '-'. E.g. "/c:3;*2.5,TOP;-1"
+REM                      for the value a floating point value or a columnname can be specified. A columnname must be surrounded with curly braces, e.g. '-{TOP}'
+REM                      for stringvalues only operators '+' and '-' are valid (to concatenate or remove a substring).
+REM                    - a string expression is a combination of (one-based) column numbers/names and/or constant values/strings; 
+REM                      column numbers/names must be surrounded by {}-brackets and {<col>}-substrings are replaced with the corresponding column values in that row;
+REM                      use[ID](including brackets) for the (one-based) rownumber of the processed row.
+REM                    - for string manipulation two forms are allowed:
+REM                      {<col>:~idx,len} to select substring at (zero based) index idx with length len (see batchfile-syntax)
+REM                      {<col>:A=B} to replace substrings A by B
+REM                    Note: string expression results are trimmed after applying expressions.
 REM                'n' is an optional NoData-value for new columns and rows that were not selected.
 REM USEREGEXP:    Specify 1 to use regular expressions for string values in combination with (un)equal operator, leave empty or 0 otherwise
 REM               An example expression is: '^^(7^|8)$' (without surrounding quotes) to select points with value 7 or 8 in the specified column. For some symbols you need escape characters, in this case for '^' and '|'.
@@ -56,15 +64,16 @@ SET CHANGE_EXPS=
 SET USEREGEXP=1
 
 REM --- Define optional criteria for selection/reading timeseries of IPF-file(s) ---
-REM TS_S/EDATE:   Start-/enddate of period to select IPF-points that have non-NoData values in timeseries within specified period. Use format yyyymmdd[hhmmss]. 
-REM TS_VALCOLIDX: Index (zero-based) of value column that should be checked for non-NoData values. When not defined, all value columns must contain non-NoData values for a point to be selected.
-REM TS_CLIP:      Specify (with value 1) to clip timeseries of selected points to specified period, or use 0 or leave empty to not clip
-REM TS_SKIP:      Specify (with value 1) to skip reading/writing of IPF-timeseries, or use 0 or leave empty to not skip
-REM TS_DELEMPTY:  Specify (with value 1) to delete IPF-points with empty timeseries (without any values), or use 0 or leave empty to not delete
-SET TS_SDATE=
-SET TS_EDATE=
-SET TS_VALCOLIDX=
-SET TS_CLIP=
+REM TS_PERIOD_S/EDATE:   Start-/enddate of period to select IPF-points that have non-NoData values in timeseries within specified period. Use format yyyymmdd[hhmmss]. 
+REM TS_PERIOD_CLIP:      Specify if timeseries should be clipped to specified period: use 0 to select points without clipping (default); use 1 to select points and clip; use 2 to just clip, but not remove points without dates in period
+REM TS_PERIOD_VALCOLIDX: Index (zero-based) of value column that should be checked for non-NoData values within defined period. 
+REM                      When TS_PERIOD_VALCOLIDX is -1 or not defined, all value columns must contain non-NoData values for a point to be selected.
+REM TS_SKIP:             Specify (with value 1) to skip reading/writing of IPF-timeseries, or use 0 or leave empty to not skip
+REM TS_DELEMPTY:         Specify (with value 1) to delete IPF-points with empty timeseries (without any timestamps/values), or use 0 or leave empty to not delete
+SET TS_PERIOD_SDATE=
+SET TS_PERIOD_EDATE=
+SET TS_PERIOD_VALCOLIDX=
+SET TS_PERIOD_CLIP=
 SET TS_SKIP=
 SET TS_DELEMPTY=
 
@@ -141,18 +150,12 @@ IF NOT "%TOPLEVEL%"=="" (
     SET LEVELOPTION=/l:"%TOPLEVEL%","%BOTLEVEL%"
   )
 )
-IF NOT "%VOLUMEMETHOD%" == "" (
-  SET MSG=VOLUMEMETHOD=%VOLUMEMETHOD%
-  ECHO     !MSG!
-  ECHO !MSG! >> %LOGFILE%
-  SET METHODOPTION=/v:%VOLUMEMETHOD%
-)
 IF DEFINED EXPCOL (
   IF DEFINED EXPOP (
-    SET MSG=SELECT_EXP=%EXPCOL%,%EXPOP%,"%EXPVAL%"
+    SET MSG=SELECT_EXP=%EXPCOL%,%EXPOP%,'%EXPVAL%'
     ECHO     !MSG!
     ECHO !MSG! >> %LOGFILE%
-    SET EXPOPTION=/x:%EXPCOL%,%EXPOP%,"%EXPVAL%"
+    SET EXPOPTION=/x:%EXPCOL%,%EXPOP%,'%EXPVAL%'
   )
 )
 IF NOT "%CHANGE_EXPS%" == "" (
@@ -165,14 +168,14 @@ IF "%USEREGEXP%"=="1" SET REGEXPOPTION=/r
 IF "%ADDMETADATA%"=="1" SET MOPTION=/m
 IF "%TS_SKIP%"=="1" SET TSSOPTION=/tss
 IF "%TS_DELEMPTY%"=="1" SET TSEOPTION=/tse
-IF DEFINED TS_SDATE (
-  IF NOT DEFINED TS_CLIP SET TS_CLIP=0
-  SET TSPOPTION=/tsp:%TS_SDATE%,%TS_EDATE%,!TS_CLIP!
-  IF DEFINED TS_VALCOLIDX SET TSPOPTION=!TSPOPTION!,%TS_VALCOLIDX%
+IF DEFINED TS_PERIOD_SDATE (
+  IF NOT DEFINED TS_PERIOD_CLIP SET TS_PERIOD_CLIP=0
+  SET TSPOPTION=/tsp:%TS_PERIOD_SDATE%,%TS_PERIOD_EDATE%,!TS_PERIOD_CLIP!
+  IF DEFINED TS_PERIOD_VALCOLIDX SET TSPOPTION=!TSPOPTION!,%TS_PERIOD_VALCOLIDX%
 )
 
-ECHO "%TOOLSPATH%\IPFselect.exe" %MOPTION% %XYZOPTION% %REGEXPOPTION% %EXPOPTION% %METHODOPTION% %GENFILEOPTION% %LEVELOPTION% %EXTENTOPTION% %CHANGEOPTION% %TSSOPTION% %TSPOPTION% %TSEOPTION% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" >> %LOGFILE%
-"%TOOLSPATH%\IPFselect.exe" %MOPTION% %XYZOPTION% %REGEXPOPTION% %EXPOPTION% %METHODOPTION% %GENFILEOPTION% %LEVELOPTION% %EXTENTOPTION% %CHANGEOPTION% %TSSOPTION% %TSPOPTION% %TSEOPTION% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" >> %LOGFILE%
+ECHO "%TOOLSPATH%\IPFselect.exe" %MOPTION% %XYZOPTION% %REGEXPOPTION% %EXPOPTION% %GENFILEOPTION% %LEVELOPTION% %EXTENTOPTION% %CHANGEOPTION% %TSSOPTION% %TSPOPTION% %TSEOPTION% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" >> %LOGFILE%
+"%TOOLSPATH%\IPFselect.exe" %MOPTION% %XYZOPTION% %REGEXPOPTION% %EXPOPTION% %GENFILEOPTION% %LEVELOPTION% %EXTENTOPTION% %CHANGEOPTION% %TSSOPTION% %TSPOPTION% %TSEOPTION% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 
 ECHO: 
