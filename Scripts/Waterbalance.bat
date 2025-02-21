@@ -8,7 +8,7 @@ REM *   Create waterbalance for BDG-files    *
 REM *   with iMOD-batchfunction WBALANCE and *
 REM *   formats results in Excelsheet.       *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.1.1                         *
 REM * MODIFICATIONS                          *
 REM *   2016-05-01 Initial version           *
 REM ******************************************
@@ -27,6 +27,7 @@ REM MODELNAME:    Full name of model (as MODELNAME[_SUBMODELNAME[_POSTFIX]]), to
 REM WBAL_FNAME:   Balance filename (without CSV-extension). If SKIPIMOD=1 a path can be specified as well, otherwise specify just the filename without an extension
 REM SKIPIMOD:     Specify (with value 1) that the creation of the waterbalance CSV-file with iMOD can be skipped and use an existing WBAL_FNAME CSV-file, or leave empty to do use iMOD to create CSV-file
 REM WBAL_GENFILE: GEN-file with features to calculate waterbalance(s) for (ignored if SKIPIMOD=1)
+REM WBAL_IDFFILE: IDF-file with non-NoData cells to calculate waterbalance for (ignored if SKIPIMOD=1); ignored if WBAL_GENFILE is also defined
 REM WBAL_LAYERS:  Comma seperated list of layersnumbers to be included in waterbalance per zone (ignored if SKIPIMOD=1)
 REM WBAL_SYSTEMS: Comma seperated list of systems to be included in the waterbalance CSV-file for OLF, ISG, RIV and DRN-packages if corresponding BDGxxx_SYSi IDF-files exist, or leave empty to not add SYS-files
 REM IDCOLIDX:     Column index (zero-based) of the zone ID-column in the GEN-file which is specified in the CSV-file, or leave empty to use a sequence number for each zone
@@ -36,6 +37,7 @@ SET MODELNAME=ORG_BAS
 SET WBAL_FNAME=WBALANCE_%MODELNAME% - bufferextent
 SET SKIPIMOD=
 SET WBAL_GENFILE=%SHAPESPATH%\MODELEXTENT.gen
+SET WBAL_IDFFILE=
 SET WBAL_LAYERS=%MODELLAYERS%
 SET WBAL_SYSTEMS=1,2,5,6
 SET IDCOLIDX=
@@ -43,7 +45,7 @@ SET ISMF6=1
 SET RESULTPATH=result
 
 REM Specify metadata
-SET METADATA_DATASOURCE=%MODELNAME%; %WBAL_GENFILE%
+SET METADATA_DATASOURCE=%MODELNAME%; %WBAL_GENFILE%%WBAL_IDFNAME%
 SET METADATA_PROCESSDESCRIPTION=Zie logboek XXX
 
 REM *********************
@@ -71,6 +73,12 @@ IF NOT EXIST "%RESULTPATH%" MKDIR "%RESULTPATH%"
 
 IF NOT "%SKIPIMOD%"=="1" (
   IF NOT EXIST "%TEMPPATH%" MKDIR "%TEMPPATH%"
+
+  IF NOT DEFINED WBAL_LAYERS (
+    ECHO WBAL_LAYERS should be defined for iMOD-batchfunction WBALANCE
+    ECHO WBAL_LAYERS should be defined for iMOD-batchfunction WBALANCE >> %LOGFILE%
+    GOTO error
+  )
 
   REM Note: somehow the waterbalance function doesn't work when BDGRCH or BDGISG is added to the balance, but not saved for the modelrun
   REM Because of this BDGRCH and RBGISG are only added when present in the resultsfolder
@@ -216,15 +224,31 @@ IF NOT "%SKIPIMOD%"=="1" (
   )
 
   REM Correct for relative path
-  IF NOT "%WBAL_GENFILE:~1,2%"==":\" SET WBAL_GENFILE=%THISPATH%%WBAL_GENFILE%
+  IF DEFINED WBAL_GENFILE (
+    SET SUBSTRING=%WBAL_GENFILE:~1,2%
+    IF NOT "!SUBSTRING!"==":\" SET WBAL_GENFILE=%THISPATH%%WBAL_GENFILE%)
+  )
+  IF DEFINED WBAL_IDFFILE (
+    SET SUBSTRING=%WBAL_IDFFILE:~1,2%
+    IF NOT "%WBAL_IDFFILE:~1,2%"==":\" SET WBAL_IDFFILE=%THISPATH%%WBAL_IDFFILE%
+  )
   
   REM ECHO BALx=BDGGHB >> %INIFILE%
   ECHO ILAYER=%WBAL_LAYERS% >> %INIFILE%
   ECHO NDIR=1 >> %INIFILE%
   ECHO SOURCEDIR1="%RESULTSPATH%\%MODELPATH%" >> %INIFILE%
   ECHO OUTPUTNAME1="%TEMPPATH%\%WBAL_FNAME%.CSV" >> %INIFILE%
-  ECHO ISEL=2 >> %INIFILE%
-  ECHO GENFILE="%WBAL_GENFILE%" >> %INIFILE%
+  IF DEFINED WBAL_GENFILE (
+    ECHO ISEL=2 >> %INIFILE%
+    ECHO GENFILE="%WBAL_GENFILE%" >> %INIFILE%
+  ) ELSE (
+    IF DEFINED WBAL_IDFFILE (
+      ECHO ISEL=3 >> %INIFILE%
+      ECHO IDFNAME="%WBAL_IDFFILE%" >> %INIFILE%
+    ) ELSE (
+      ECHO ISEL=1 >> %INIFILE%
+    )
+  )
   
   SET MSG=  MODEL='%MODELNAME%' 
   ECHO !MSG!
@@ -232,9 +256,18 @@ IF NOT "%SKIPIMOD%"=="1" (
   SET MSG=  LAYERS=%WBAL_LAYERS%
   ECHO !MSG!
   ECHO !MSG! >> %LOGFILE%
-  SET MSG=  SHAPE=%WBAL_GENFILE%
+  IF DEFINED WBAL_GENFILE (
+    SET MSG=  SHAPE=%WBAL_GENFILE%
+  ) ELSE (
+    IF DEFINED WBAL_IDFFILE (
+      SET MSG=  SHAPE=%WBAL_GENFILE%
+    ) ELSE (
+      SET MSG=  No SHAPE defined, using full area
+    )
+  )
   ECHO !MSG!
   ECHO !MSG! >> %LOGFILE%
+
   ECHO:
   ECHO: >> %LOGFILE%
   
