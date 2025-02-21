@@ -6,7 +6,7 @@ REM * IPFreorder.bat                         *
 REM * DESCRIPTION                            *
 REM *   Reorders or selects IPF-file columns *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.2                         *
+REM * VERSION: 2.0.3                         *
 REM * MODIFICATIONS                          *
 REM *   2018-10-01 Initial version           *
 REM ******************************************
@@ -18,19 +18,22 @@ REM ********************
 REM IPFPATH:     Specify path to input IPF-file(s)
 REM IPFFILTER:   Input IPF-file(s), a commaseperated list with individual files, or a single filter using wildcards * and/or ?
 REM ISRECURSIVE: Specify with value 1 to search input path recursively for specified files
-REM REORDERING:  Specify reordering as:  (<colidx>|<colidx>;<colname>|+<colname>;<colval>)
-REM              (...)      - one or more of the given parameters, seperated by spaces
-REM              <a>|<b>    - either parameter <a> or parameter <b>
-REM              <colidx>   - a (one-based) columnindex in the original IPF-file
-REM              <colname>  - a columnname of the corresponding colidx or columnvalue
-REM              <colval>   - a constant value for the whole column or [ID] to create a unique integer ID-values
-REM                           a '+'-prefix is prefixed to specify not an index but a name;value-pair.
-REM              all parameters can be (partly) surrounded by "-characters to include spaces; leave empty copy all columns in orginal order
-REM              e.g. 1;X 2;Y 3 +ZONE:1 +ID:[ID]
-REM ASSOCCOL:    Column (in new ordering) of column with associated files; use name of number, or use value 0 for IPF-files without associated files, 
+REM REORDERING:  A column (re)definition for each column in the result IPF-file, seperated by spaces, defined as follows:
+REM                col             : column number (one-based) or columnname in the source IPF-file
+REM                col;colname     : column number/name in the source IPF-file and a new columnname for the target IPF-file
+REM                +colname;colval : column name for a new column in the target IPF-file, and a single string for the column value of all existing rows.
+REM                                  use [n:A=B] for filename and replace substring A with B (case ignored)
+REM                                  use [n:-A] for part of filename after last ocurrance of substring A (case ignored)
+REM                col+            : copy specified column and all following columns from source source IPF-file
+REM                colA=colB       : Rename column with name or number colA in current reordered columns with columnname colB
+REM                -col            : Delete column with name or number col in current reordered columns
+REM              Notes: when no column definitions are specified, all columns are copied without reordering.
+REM                     environment variables are replaced before evaluating column definitions.
+REM ASSOCCOL:    Column (in new ordering) with associated files; use name of number, or use value 0 for IPF-files without associated files, 
 REM                or leave empty to correct an existing column number for associated files automatically when that column is copied to the new IPF-file.
 REM ISTSSKIPPED: Specify with value 1 to skip reading/writing of IPF-timeseries
-REM RESULTPATH:  Path or filename to write output IPF-file
+REM RESULTPATH:  Path to write output IPF-file(s)
+REM RESULTFILE:  Optional filename if single inputfile is specified, or leave empty to use name of input file(s)
 SET IPFPATH=input
 SET IPFFILTER=*.IPF
 SET ISRECURSIVE=
@@ -38,6 +41,7 @@ SET REORDERING=1;X 2;Y +IPESTZone;[ID] 7;SourceZone
 SET ASSOCCOL=
 SET ISTSSKIPPED=
 SET RESULTPATH=result
+SET RESULTFILE=
 
 REM *********************
 REM * Derived variables *
@@ -76,15 +80,20 @@ REM Use workaround, see: https://stackoverflow.com/questions/11685375/i-need-to-
 FOR /f "tokens=1,* delims=*" %%a IN ("%IPFFILTER%") DO (SET CHECKSTRING=%%a%%b)
 IF NOT "%IPFFILTER%"=="%CHECKSTRING%" SET HASWILDCARDS=1
 
+CD "%RESULTPATH%"
+SET OUTPUTPATH=%CD%
+IF DEFINED RESULTFILE SET OUTPUTPATH=%OUTPUTPATH%\%RESULTFILE%
+CD "%THISPATH%"
+
 IF DEFINED HASWILDCARDS (
   ECHO   processing IPF-files for filter '%IPFFILTER%' ...
-  ECHO "%TOOLSPATH%\IPFreorder.exe" /o %ASSOPTION% %RECOPTION% %TSOPTION% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" %REORDERING% >> %LOGFILE%
-  "%TOOLSPATH%\IPFreorder.exe" /o %ASSOPTION% %RECOPTION% %TSOPTION% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" %REORDERING% >> %LOGFILE%
+  ECHO "%TOOLSPATH%\IPFreorder.exe" /o %ASSOPTION% %RECOPTION% %TSOPTION% "%IPFPATH%" "%IPFFILTER%" "%OUTPUTPATH%" %REORDERING% >> %LOGFILE%
+  "%TOOLSPATH%\IPFreorder.exe" /o %ASSOPTION% %RECOPTION% %TSOPTION% "%IPFPATH%" "%IPFFILTER%" "%OUTPUTPATH%" %REORDERING% >> %LOGFILE%
   IF ERRORLEVEL 1 GOTO error
 ) ELSE (
   ECHO CD /D "%IPFPATH%" > %LOGFILE%
   CD /D "%IPFPATH%"
-  FOR %%G IN (%IPFFILTER%) DO (
+  FOR %%G IN ("%IPFFILTER%") DO (
     ECHO   processing %%G
     SET IPFFILENAME=%%~nxG
     IF NOT EXIST "%%G" (
@@ -93,8 +102,8 @@ IF DEFINED HASWILDCARDS (
       GOTO error
     )
 
-    ECHO "%TOOLSPATH%\IPFreorder.exe" /o %ASSOPTION% %RECOPTION% %TSOPTION% "." "!IPFFILENAME!" "%THISPATH%%RESULTPATH%" %REORDERING% >> %LOGFILE%
-    "%TOOLSPATH%\IPFreorder.exe" /o %ASSOPTION% %RECOPTION% %TSOPTION% "." "!IPFFILENAME!" "%THISPATH%%RESULTPATH%" %REORDERING% >> %LOGFILE%
+    ECHO "%TOOLSPATH%\IPFreorder.exe" /o %ASSOPTION% %RECOPTION% %TSOPTION% "." "!IPFFILENAME!" "%OUTPUTPATH%" %REORDERING% >> %LOGFILE%
+    "%TOOLSPATH%\IPFreorder.exe" /o %ASSOPTION% %RECOPTION% %TSOPTION% "." "!IPFFILENAME!" "%OUTPUTPATH%" %REORDERING% >> %LOGFILE%
     IF ERRORLEVEL 1 GOTO error
   )
   CD /D "%THISPATH%"
