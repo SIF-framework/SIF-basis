@@ -6,7 +6,7 @@ REM * IPFsample.bat                            *
 REM * DESCRIPTION                              * 
 REM *   Samples IDF-files for given IPF-points *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)     *
-REM * VERSION: 2.0.2                           *
+REM * VERSION: 2.0.3                           *
 REM * MODIFICATIONS                            *
 REM *   2017-03-01 Initial version             *
 REM ********************************************
@@ -55,6 +55,7 @@ REM IPFCOLUMN:       Optional columnindex (zero based) or column name in IPF-fil
 REM ISINTERPOLATED:  Specify (with value 1) that grid values should be interpolated bilinearly (based on 4 surrounding gridvalues) to location of point in grid-cell; otherwise no interpolation is performed and the gridvalues is returned.
 REM ISSKIPNODATA:    Specify (with value 1) that points in NoData-cells for the specified IDF-file should be skipped from the results
 REM ISSKIPNAN:       Specify (with value 1) that points with invalid measurement values (e.g. NaN) in a specified IPF-file should be skipped from the results
+REM ISSKIPOUTSIDE:   Specify (with value 1) that points outside the IDF-extent should be skipped from the results
 REM ISMETADATAADDED:      Specify with (value 1) to add metadata file for each resulting IPF-file, or leave empty to skip
 REM METADATA_DESCRIPTION: Metadata description to be addded to metadata of output IPF-file. The metadata source is added automatically
 REM RESULTPATH:      Path to write result file(s) to
@@ -64,6 +65,7 @@ SET IPFCOLUMN=6
 SET ISINTERPOLATED
 SET ISSKIPNODATA=1
 SET ISSKIPNAN=1
+SET ISSKIPOUTSIDE=1
 SET ISMETADATAADDED=
 SET METADATA_DESCRIPTION=Geprikt en geinterpoleerd
 SET RESULTPATH=result
@@ -153,8 +155,9 @@ SET /A Nd=!Nd!-1
 
 SET SOPTION=
 SET IOPTION=
-SET NODATAOPTION=
-SET EXCLUDEOPTION=
+SET NOPTION=
+SET XOPTION=
+SET EOPTION=
 IF NOT "%IPFCOLUMN%"=="" (
   IF NOT "%RESULTPOSTFIX%"=="" (
     SET SOPTION=/s:%IPFCOLUMN%,"%RESULTPATH%\ipfsamplerstats.csv",%RESULTPOSTFIX% 
@@ -162,10 +165,12 @@ IF NOT "%IPFCOLUMN%"=="" (
     SET SOPTION=/s:%IPFCOLUMN%,"%RESULTPATH%\ipfsamplerstats.csv"
   )
 )
-IF "%ISSKIPNODATA%"=="1" SET NODATAOPTION=/n
-IF "%ISSKIPNAN%"=="1" SET EXCLUDEOPTION=/x
 IF "%ISINTERPOLATED%"=="1" SET IOPTION=/i
+IF "%ISSKIPNODATA%"=="1" SET NOPTION=/n
+IF "%ISSKIPNAN%"=="1" SET XOPTION=/x
+IF "%ISSKIPOUTSIDE%"=="1" SET EOPTION=/e
 
+SET RESULTFILE_ORG=%RESULTFILE%
 IF DEFINED IPFFILTER (
   SET MSG=Sampling IPF-files with %IPFFILTER% ...
   ECHO !MSG!
@@ -177,9 +182,10 @@ IF DEFINED IPFFILTER (
     SET MSG=  sampling %%~nxG ...
     ECHO !MSG!
     ECHO !MSG! >> %LOGFILE%
+    SET RESULTFILE=%RESULTFILE_ORG%
     IF NOT DEFINED RESULTFILE SET RESULTFILE=%%~nG%RESULTPOSTFIX%.IPF
-    ECHO "%TOOLSPATH%\IPFsample.exe" /o /e %IOPTION% /d:2 %SOPTION% %NODATAOPTION% %EXCLUDEOPTION% "%%~dpG " "%%~nxG" "!IDFFILE!" "%THISDIR%%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
-    "%TOOLSPATH%\IPFsample.exe" /o %IOPTION% /e /d:2 %SOPTION% %NODATAOPTION% %EXCLUDEOPTION% "%%~dpG " "%%~nxG" "!IDFFILE!" "%THISDIR%%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
+    ECHO "%TOOLSPATH%\IPFsample.exe" /o %EOPTION% %IOPTION% /d:2 %SOPTION% %NOPTION% %XOPTION% "%%~dpG " "%%~nxG" "!IDFFILE!" "%THISDIR%%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
+    "%TOOLSPATH%\IPFsample.exe" /o %IOPTION% %EOPTION% /d:2 %SOPTION% %NOPTION% %XOPTION% "%%~dpG " "%%~nxG" "!IDFFILE!" "%THISDIR%%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
     IF ERRORLEVEL 1 GOTO error
   )
 
@@ -247,12 +253,13 @@ IF DEFINED IPFFILTER (
         REM ECHO !MSG!
         ECHO !MSG! >> %LOGFILE%
         IF EXIST "%IDFPATH%\!IDFFILENAME!" (
+          SET RESULTFILE=%RESULTFILE_ORG%
           IF NOT DEFINED RESULTFILE SET RESULTFILE=!IPFFILENAME:.IPF=%RESULTPOSTFIX%.IPF!
           SET MSG=    sampling IDF-file !IDFFILENAME! ...
           ECHO !MSG!
           ECHO !MSG! >> %LOGFILE%
-          ECHO "%TOOLSPATH%\IPFsample.exe" /o /e %IOPTION% /d:2 %SOPTION% %NODATAOPTION% %EXCLUDEOPTION% "%IPFPATH%" "!IPFFILENAME!" "%IDFPATH%\!IDFFILENAME!" "%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
-          "%TOOLSPATH%\IPFsample.exe" /o %IOPTION% /e /d:2 %SOPTION% %NODATAOPTION% %EXCLUDEOPTION% "%IPFPATH%" "!IPFFILENAME!" "%IDFPATH%\!IDFFILENAME!" "%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
+          ECHO "%TOOLSPATH%\IPFsample.exe" /o %EOPTION% %IOPTION% /d:2 %SOPTION% %NOPTION% %XOPTION% "%IPFPATH%" "!IPFFILENAME!" "%IDFPATH%\!IDFFILENAME!" "%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
+          "%TOOLSPATH%\IPFsample.exe" /o %EOPTION% %IOPTION% /d:2 %SOPTION% %NOPTION% %XOPTION% "%IPFPATH%" "!IPFFILENAME!" "%IDFPATH%\!IDFFILENAME!" "%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
           IF ERRORLEVEL 1 GOTO error
         ) ELSE (
           ECHO     no corresponding IDF-file found, IPF-file skipped >> %LOGFILE%
