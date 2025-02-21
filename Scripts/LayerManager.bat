@@ -5,7 +5,7 @@ REM *                                            *
 REM * LayerManager.bat                           *
 REM * DESCRIPTION                                *
 REM *   Checks REGIS/iMOD layers for consistency *
-REM * VERSION: 2.0.1                             *
+REM * VERSION: 2.0.3                             *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)       *
 REM * MODIFICATIONS                              *
 REM *   2019-02-08 Initial version               *
@@ -16,10 +16,11 @@ REM ********************
 REM * Script variables *
 REM ********************
 REM ISIMODMODEL:    Specify (with value 1) if input files define an iMOD-model, or use value 0 or leave empty to specify REGIS-files (default)
-REM TOPPATH:        Path to (unfilled) REGIS/iMOD TOP IDF-files
-REM BOTPATH:        Path to (unfilled) REGIS/iMOD BOT IDF-files
-REM KHPATH:         Path to corresponding REGIS/iMOD kh IDF-files, or leave empty if equal to TOPPATH
-REM KVPATH:         Path to corresponding REGIS/iMOD kv IDF-files, or leave empty if equal to TOPPATH
+REM INPUTPATH:      Base path to input files
+REM TOPPATH:        Path to (unfilled) REGIS/iMOD TOP IDF-files: absolute or relative to INPUTPATH, or leave empty if TOP-files are in INPUTPATH
+REM BOTPATH:        Path to (unfilled) REGIS/iMOD BOT IDF-files: absolute or relative to INPUTPATH, or leave empty if BOT-files are in INPUTPATH
+REM KHPATH:         Path to corresponding REGIS/iMOD kh IDF-files: absolute or relative to INPUTPATH, or leave empty if files are in INPUTPATH
+REM KVPATH:         Path to corresponding REGIS/iMOD kv IDF-files: absolute or relative to INPUTPATH, or leave empty if files are in INPUTPATH
 REM KVAPATH:        Path to KVA-files in case of an input iMOD-model and when a KHKVPATH has been set
 REM DEFAULTKVA:     Default KVA-value (floating point value in English notation) for missing KVA-files, leave empty to skip KVA
 REM REGISORDERFILE: Filename of ASCI-file with current order of all REGIS layers, or leave empty. For each line of this textfile an order number and REGIS layername should be specified (comma seperated), e.g. '1,hlc'
@@ -29,10 +30,11 @@ REM KDCSUBDIRNAME:  Name of subdirectory to store kD-, c- and thickness-grids (i
 REM ISCLEANOUTPUT:  Specify (with value 1) if current/old files in 'output'-subdirectory should be deleted before starting
 REM RESULTPATH:     Path to write/copy results to
 SET ISIMODMODEL=0
-SET TOPPATH=%ROOTPATH%\BASISDATA\REGIS\TOPBOT
-SET BOTPATH=%ROOTPATH%\BASISDATA\REGIS\TOPBOT
-SET KHPATH=%ROOTPATH%\BASISDATA\REGIS\KHV
-SET KVPATH=%ROOTPATH%\BASISDATA\REGIS\KVV
+SET INPUTPATH=%ROOTPATH%\BASISDATA\REGIS
+SET TOPPATH=TOPBOT
+SET BOTPATH=TOPBOT
+SET KHPATH=KHV
+SET KVPATH=KVV
 SET KVAPATH=
 SET DEFAULTKVA=
 SET REGISORDERFILE=
@@ -63,19 +65,23 @@ SET MSG=Running script '%SCRIPTNAME%' ...
 ECHO %MSG%
 ECHO %MSG% > %LOGFILE%
 
-IF NOT EXIST "%TOPPATH%" (
-   ECHO TOPPATH could not be found: %TOPPATH%
-   ECHO TOPPATH could not be found: %TOPPATH% >> %LOGFILE%
-   GOTO error
+IF DEFINED TOPPATH IF NOT EXIST "%TOPPATH%" (
+  IF NOT EXIST "%INPUTPATH%\%TOPPATH%" (
+    ECHO TOPPATH could not be found: %TOPPATH%
+    ECHO TOPPATH could not be found: %TOPPATH% >> %LOGFILE%
+  )
+  GOTO error
 )
-IF NOT EXIST "%BOTPATH%" (
-   ECHO BOTPATH could not be found: %BOTPATH%
-   ECHO BOTPATH could not be found: %BOTPATH% >> %LOGFILE%
-   GOTO error
+IF DEFINED BOTPATH IF NOT EXIST "%BOTPATH%" (
+  IF NOT EXIST "%INPUTPATH%\%BOTPATH%" (
+    ECHO BOTPATH could not be found: %BOTPATH%
+    ECHO BOTPATH could not be found: %BOTPATH% >> %LOGFILE%
+  )
+  GOTO error
 )
 
-IF NOT "%REGISORDERFILE%"=="" (
-  IF NOT EXIST "%REGISORDERFILE%" (
+IF DEFINED REGISORDERFILE IF NOT EXIST "%REGISORDERFILE%" (
+  IF NOT EXIST "%INPUTPATH%\%REGISORDERFILE%" (
     ECHO INI-file not found: %REGISORDERFILE%
     ECHO INI-file not found: %REGISORDERFILE% >> %LOGFILE%
     GOTO error
@@ -83,9 +89,9 @@ IF NOT "%REGISORDERFILE%"=="" (
 )
 
 IF NOT EXIST "%LAYERMANAGEREXE%" (
-   ECHO LAYERMANAGEREXE could not be found: %LAYERMANAGEREXE%
-   ECHO LAYERMANAGEREXE could not be found: %LAYERMANAGEREXE% >> %LOGFILE%
-   GOTO error
+  ECHO LAYERMANAGEREXE could not be found: %LAYERMANAGEREXE%
+  ECHO LAYERMANAGEREXE could not be found: %LAYERMANAGEREXE% >> %LOGFILE%
+  GOTO error
 )
 
 REM Create empty result directory
@@ -99,6 +105,8 @@ SET DELOPTION=
 SET CHECKOPTION=
 SET KDCOPTION=
 SET ORDEROPTION=
+SET TOPOPTION=
+SET BOTOPTION=
 IF "%ISIMODMODEL%"=="1" SET IMODOPTION=/i
 IF DEFINED KHPATH SET KHOPTION=/khv:"%KHPATH%"
 IF DEFINED KVPATH SET KVOPTION=/kvv:"%KVPATH%"
@@ -118,17 +126,19 @@ IF "%ISKDCCREATED%"=="1" (
   )
 )
 IF DEFINED REGISORDERFILE SET ORDEROPTION=/o:"%REGISORDERFILE%"
+IF DEFINED TOPPATH SET TOPOPTION=/top:"%TOPPATH%"
+IF DEFINED BOTPATH SET BOTOPTION=/bot:"%BOTPATH%"
 
 REM Start LayerManager
 IF EXIST "%TOOLSPATH%\Tee.exe" (
-  ECHO "%LAYERMANAGEREXE%" %CHECKOPTION% %KDCOPTION% %IMODOPTION% %DELOPTION% %KHOPTION% %KVOPTION% %KVAOPTION% %ORDEROPTION% /top:"%TOPPATH%" /bot:"%BOTPATH%" "%TOPPATH%" "%RESULTPATH%"
-  "%LAYERMANAGEREXE%" %CHECKOPTION% %KDCOPTION% %IMODOPTION% %DELOPTION% %KHOPTION% %KVOPTION% %KVAOPTION% %ORDEROPTION% /top:"%TOPPATH%" /bot:"%BOTPATH%" "%TOPPATH%" "%RESULTPATH%" | "%TOOLSPATH%\Tee.exe" /a %LOGFILE%
+  ECHO "%LAYERMANAGEREXE%" %CHECKOPTION% %KDCOPTION% %IMODOPTION% %DELOPTION% %KHOPTION% %KVOPTION% %KVAOPTION% %ORDEROPTION% %TOPOPTION% %BOTOPTION% "%INPUTPATH%" "%RESULTPATH%"
+  "%LAYERMANAGEREXE%" %CHECKOPTION% %KDCOPTION% %IMODOPTION% %DELOPTION% %KHOPTION% %KVOPTION% %KVAOPTION% %ORDEROPTION% %TOPOPTION% %BOTOPTION% "%INPUTPATH%" "%RESULTPATH%" | "%TOOLSPATH%\Tee.exe" /a %LOGFILE%
   IF ERRORLEVEL 1 GOTO error
 ) ELSE (
-  ECHO "%LAYERMANAGEREXE%" %CHECKOPTION% %KDCOPTION% %IMODOPTION% %DELOPTION% %KHOPTION% %KVOPTION% %KVAOPTION% %ORDEROPTION% /top:"%TOPPATH%" /bot:"%BOTPATH%" "%TOPPATH%" >> %LOGFILE%
-  "%LAYERMANAGEREXE%" %CHECKOPTION% %KDCOPTION% %IMODOPTION% %DELOPTION% %KHOPTION% %KVOPTION% %KVAOPTION% %ORDEROPTION% /top:"%TOPPATH%" /bot:"%BOTPATH%" "%TOPPATH%" >> %LOGFILE%
-  IF "%ERRORLEVEL%"=="1" GOTO inconsistencies
-  IF "%ERRORLEVEL%"=="-1" GOTO error
+  ECHO "%LAYERMANAGEREXE%" %CHECKOPTION% %KDCOPTION% %IMODOPTION% %DELOPTION% %KHOPTION% %KVOPTION% %KVAOPTION% %ORDEROPTION% %TOPOPTION% %BOTOPTION% "%INPUTPATH%" "%RESULTPATH%" >> %LOGFILE%
+  "%LAYERMANAGEREXE%" %CHECKOPTION% %KDCOPTION% %IMODOPTION% %DELOPTION% %KHOPTION% %KVOPTION% %KVAOPTION% %ORDEROPTION% %TOPOPTION% %BOTOPTION% "%INPUTPATH%" "%RESULTPATH%" >> %LOGFILE%
+  IF "!ERRORLEVEL!"=="1" GOTO inconsistencies
+  IF "!ERRORLEVEL!"=="-1" GOTO error
 )
 
 SET MSG=Script finished, see "%~n0.log"
