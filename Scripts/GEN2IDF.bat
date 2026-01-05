@@ -3,10 +3,10 @@ REM ******************************************
 REM * SIF-basis v2.1.0 (Sweco)               *
 REM *                                        *
 REM * GEN2IDF.bat                            *
-REM * DESCRIPTION                            * 
+REM * DESCRIPTION                            *
 REM *   Convert GEN-file(s) to IDF-file(s)   *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.2                         *
+REM * VERSION: 2.0.3                         *
 REM * MODIFICATIONS                          *
 REM *   2018-09-12 Initial version           *
 REM ******************************************
@@ -44,10 +44,10 @@ SET METHODPAR1=1
 SET METHODPAR2=2
 SET METHODPAR3=9
 SET METHODPAR4=
-SET CELLSIZE=100
+SET CELLSIZE=25
 SET SKIPPEDVALUES=-9999
 SET ISANGLEADDED=0
-SET ISSIZEADDED=1
+SET ISSIZEADDED=0
 SET PROCESSISLANDS=
 SET IGNOREPTORDER=1
 SET SORTFEATURES=1
