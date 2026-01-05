@@ -6,7 +6,7 @@ REM * IPFsample.bat                            *
 REM * DESCRIPTION                              * 
 REM *   Samples IDF-files for given IPF-points *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)     *
-REM * VERSION: 2.0.3                           *
+REM * VERSION: 2.0.4                           *
 REM * MODIFICATIONS                            *
 REM *   2017-03-01 Initial version             *
 REM ********************************************
@@ -51,25 +51,27 @@ SET IDFPREFIX=
 SET IDFPOSTFIX=
 SET IDFSUBSTRINGS=
 
-REM IPFCOLUMN:       Optional columnindex (zero based) or column name in IPF-file (or leave empty to skip) with value to compare with IDF-value and calculate statistics for (which are saved in IPF-file and in CSV-file ipfsamplerstats.csv
+REM IPFSRC_VALCOL:   Optional columnindex (one-based) or column name in IPF-file (or leave empty to skip) with value to compare with IDF-value and calculate statistics for (which are saved in IPF-file and in CSV-file ipfsamplerstats.csv
 REM ISINTERPOLATED:  Specify (with value 1) that grid values should be interpolated bilinearly (based on 4 surrounding gridvalues) to location of point in grid-cell; otherwise no interpolation is performed and the gridvalues is returned.
 REM ISSKIPNODATA:    Specify (with value 1) that points in NoData-cells for the specified IDF-file should be skipped from the results
 REM ISSKIPNAN:       Specify (with value 1) that points with invalid measurement values (e.g. NaN) in a specified IPF-file should be skipped from the results
 REM ISSKIPOUTSIDE:   Specify (with value 1) that points outside the IDF-extent should be skipped from the results
-REM ISMETADATAADDED:      Specify with (value 1) to add metadata file for each resulting IPF-file, or leave empty to skip
-REM METADATA_DESCRIPTION: Metadata description to be addded to metadata of output IPF-file. The metadata source is added automatically
+REM ISMETADATAADDED: Specify with (value 1) to add metadata file for each resulting IPF-file, or leave empty to skip
+REM METADATA_DESC:   Metadata description to be addded to metadata of output IPF-file. The metadata source is added automatically
 REM RESULTPATH:      Path to write result file(s) to
 REM RESULTFILE:      When IPFFILTER is defined and is a single file, a single resultfilename can be specified
-REM RESULTPOSTFIX:   Optional postfix (if RESULTFILE is not defined) to add to output IPF-filename(s) and to extra columnnames in IPF-file with statistics: RES and ABSRES, for residual/difference and absolute residual. Setting IPFCOLUMN is obligatory then. Otherwise, leave empty.
-SET IPFCOLUMN=6
+REM RESULT_COLNAME:  Column name in result IPF-file with sampled values, or leave empty to use filename of sampled IDF-file as column name
+REM RESULTPOSTFIX:   Optional postfix (if RESULTFILE is not defined) to add to output IPF-filename(s) and to extra columnnames in IPF-file with statistics: RES and ABSRES, for residual/difference and absolute residual. Setting IPFSRC_VALCOL is obligatory then. Otherwise, leave empty.
+SET IPFSRC_VALCOL=6
 SET ISINTERPOLATED
 SET ISSKIPNODATA=1
 SET ISSKIPNAN=1
 SET ISSKIPOUTSIDE=1
 SET ISMETADATAADDED=
-SET METADATA_DESCRIPTION=Geprikt en geinterpoleerd
+SET METADATA_DESC=Geprikt en geinterpoleerd
 SET RESULTPATH=result
 SET RESULTFILE=
+SET RESULT_COLNAME=
 SET RESULTPOSTFIX=
 
 REM *********************
@@ -158,17 +160,19 @@ SET IOPTION=
 SET NOPTION=
 SET XOPTION=
 SET EOPTION=
-IF NOT "%IPFCOLUMN%"=="" (
+SET COPTION=
+IF NOT "%IPFSRC_VALCOL%"=="" (
   IF NOT "%RESULTPOSTFIX%"=="" (
-    SET SOPTION=/s:%IPFCOLUMN%,"%RESULTPATH%\ipfsamplerstats.csv",%RESULTPOSTFIX% 
+    SET SOPTION=/s:%IPFSRC_VALCOL%,"%RESULTPATH%\ipfsamplerstats.csv",%RESULTPOSTFIX% 
   ) ELSE (
-    SET SOPTION=/s:%IPFCOLUMN%,"%RESULTPATH%\ipfsamplerstats.csv"
+    SET SOPTION=/s:%IPFSRC_VALCOL%,"%RESULTPATH%\ipfsamplerstats.csv"
   )
 )
 IF "%ISINTERPOLATED%"=="1" SET IOPTION=/i
 IF "%ISSKIPNODATA%"=="1" SET NOPTION=/n
 IF "%ISSKIPNAN%"=="1" SET XOPTION=/x
 IF "%ISSKIPOUTSIDE%"=="1" SET EOPTION=/e
+IF DEFINED RESULT_COLNAME SET COPTION=/c:%RESULT_COLNAME%
 
 SET RESULTFILE_ORG=%RESULTFILE%
 IF DEFINED IPFFILTER (
@@ -184,8 +188,8 @@ IF DEFINED IPFFILTER (
     ECHO !MSG! >> %LOGFILE%
     SET RESULTFILE=%RESULTFILE_ORG%
     IF NOT DEFINED RESULTFILE SET RESULTFILE=%%~nG%RESULTPOSTFIX%.IPF
-    ECHO "%TOOLSPATH%\IPFsample.exe" /o %EOPTION% %IOPTION% /d:2 %SOPTION% %NOPTION% %XOPTION% "%%~dpG " "%%~nxG" "!IDFFILE!" "%THISDIR%%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
-    "%TOOLSPATH%\IPFsample.exe" /o %IOPTION% %EOPTION% /d:2 %SOPTION% %NOPTION% %XOPTION% "%%~dpG " "%%~nxG" "!IDFFILE!" "%THISDIR%%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
+    ECHO "%TOOLSPATH%\IPFsample.exe" /o %EOPTION% %IOPTION% /d:2 %SOPTION% %NOPTION% %XOPTION% %COPTION% "%%~dpG " "%%~nxG" "!IDFFILE!" "%THISDIR%%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
+    "%TOOLSPATH%\IPFsample.exe" /o %IOPTION% %EOPTION% /d:2 %SOPTION% %NOPTION% %XOPTION% %COPTION% "%%~dpG " "%%~nxG" "!IDFFILE!" "%THISDIR%%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
     IF ERRORLEVEL 1 GOTO error
   )
 
@@ -196,8 +200,8 @@ IF DEFINED IPFFILTER (
 
     FOR %%G IN ("%RESULTPATH%\!IPFFILTER:.IPF=%RESULTPOSTFIX%.IPF!") DO (
       ECHO   creating metadata for %%~nG ...
-      ECHO "iMODmetadata.exe" "%%~dpnG.IPF" "" "" 1 ="%MODELREF0% %MODELNAME%" "%METADATA_DESCRIPTION%" "%CONTACTORG%" "" "" "" "%IPFPATH%; !THISDIR:%ROOTPATH%\=! " "!THISDIR:%ROOTPATH%\=!%SCRIPTNAME%.bat" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" %CONTACTEMAIL% >> %LOGFILE%
-      "%TOOLSPATH%\iMODmetadata.exe" "%%~dpnG.IPF" "" "" 1 ="%MODELREF0% %MODELNAME%" "%METADATA_DESCRIPTION%" "%CONTACTORG%" "" "" "" "%IPFPATH%; !THISDIR:%ROOTPATH%\=! " "!THISDIR:%ROOTPATH%\=!%SCRIPTNAME%.bat" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" %CONTACTEMAIL% >> %LOGFILE%
+      ECHO "iMODmetadata.exe" "%%~dpnG.IPF" "" "" 1 ="%MODELREF0% %MODELNAME%" "%METADATA_DESC%" "%CONTACTORG%" "" "" "" "%IPFPATH%; !THISDIR:%ROOTPATH%\=! " "!THISDIR:%ROOTPATH%\=!%SCRIPTNAME%.bat" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" %CONTACTEMAIL% >> %LOGFILE%
+      "%TOOLSPATH%\iMODmetadata.exe" "%%~dpnG.IPF" "" "" 1 ="%MODELREF0% %MODELNAME%" "%METADATA_DESC%" "%CONTACTORG%" "" "" "" "%IPFPATH%; !THISDIR:%ROOTPATH%\=! " "!THISDIR:%ROOTPATH%\=!%SCRIPTNAME%.bat" ="%MODELREF0%" "%CONTACTORG%" "%CONTACTSITE%" "%CONTACTPERSON%" %CONTACTEMAIL% >> %LOGFILE%
       IF ERRORLEVEL 1 GOTO error
     )
   )
@@ -258,8 +262,8 @@ IF DEFINED IPFFILTER (
           SET MSG=    sampling IDF-file !IDFFILENAME! ...
           ECHO !MSG!
           ECHO !MSG! >> %LOGFILE%
-          ECHO "%TOOLSPATH%\IPFsample.exe" /o %EOPTION% %IOPTION% /d:2 %SOPTION% %NOPTION% %XOPTION% "%IPFPATH%" "!IPFFILENAME!" "%IDFPATH%\!IDFFILENAME!" "%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
-          "%TOOLSPATH%\IPFsample.exe" /o %EOPTION% %IOPTION% /d:2 %SOPTION% %NOPTION% %XOPTION% "%IPFPATH%" "!IPFFILENAME!" "%IDFPATH%\!IDFFILENAME!" "%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
+          ECHO "%TOOLSPATH%\IPFsample.exe" /o %EOPTION% %IOPTION% /d:2 %SOPTION% %NOPTION% %XOPTION% %COPTION% "%IPFPATH%" "!IPFFILENAME!" "%IDFPATH%\!IDFFILENAME!" "%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
+          "%TOOLSPATH%\IPFsample.exe" /o %EOPTION% %IOPTION% /d:2 %SOPTION% %NOPTION% %XOPTION% %COPTION% "%IPFPATH%" "!IPFFILENAME!" "%IDFPATH%\!IDFFILENAME!" "%RESULTPATH%\!RESULTFILE!" >> %LOGFILE%
           IF ERRORLEVEL 1 GOTO error
         ) ELSE (
           ECHO     no corresponding IDF-file found, IPF-file skipped >> %LOGFILE%
