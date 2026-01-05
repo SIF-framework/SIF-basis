@@ -6,7 +6,7 @@ REM * IPFselect.bat                          *
 REM * DESCRIPTION                            * 
 REM *   Selects points from IPF-file(s)      *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.2.2                         *
+REM * VERSION: 2.2.4                         *
 REM * MODIFICATIONS                          *
 REM *   2020-01-17 Initial version           *
 REM ******************************************
@@ -29,16 +29,14 @@ REM --- Define optional selection area/volume ---
 REM GENFILE:      GEN-file for definition of clip/select-volume, or leave empty
 REM TOPLEVEL:     TOP-level IDF-file or values (floating point, english notation) for definition of clip/select-volume, or leave empty
 REM BOTLEVEL:     BOT-level IDF-file or values (floating point, english notation) for definition of clip/select-volume, or leave empty
-REM EXTENT:       Extent (xll,yll,xur,yur) for definition of clip/select-volume, or leave empty
 SET GENFILE=
 SET TOPLEVEL=
 SET BOTLEVEL=
-SET EXTENT=
 
 REM --- Define optional column expression for selection and/or for changing selected values with ---
 REM EXPCOL:       For logical expression: specify (one-based) column number or name of column to evaluate. Note: columnvalues are checked to determine type. Inconsistencies or a single empty string will result in type 'string'.
 REM EXPOP:        For logical expression: specify logical operator: eq, gt, gteq, lt, lteq, uneq. Note: gt, gteq, lt and lteq might behave unexpected for string type comparisons, which is based on (ordinal) alphabetical order.
-REM EXPVAL:       For logical expression: specify (string, integer, double, DateTime) value to compare with. Leave empty for empty string.
+REM EXPVAL:       For logical expression: specify (string, integer, double, DateTime) value to compare with. EXPVAL can also be a string expression as described for option CHANGE_EXPS. Leave empty for empty string.
 REM CHANGE_EXPS:  One or more column/exp-definitions, seperated by commas, for modifying columns of selected rows and copy other rows, or leave empty to copy only selected rows. E.g. 3;*2.5;NaN,TOP;-1
 REM               Each column/exp-definition is specified by 'c;e;n', where:
 REM                'c' is a (one based) column number or a column name. If a column name is not found it is added, where non-selected points will receive an empty string as a value.
@@ -103,7 +101,6 @@ ECHO   %MSG%
 ECHO %MSG% >> %LOGFILE%
 
 REM Build option strings
-SET EXTENTOPTION=
 SET GENFILEOPTION=
 SET LEVELOPTION=
 SET XYZOPTION=
@@ -128,12 +125,6 @@ IF NOT "%XCOLIDX%"=="" (
       SET XYZOPTION=/y:%XCOLIDX%,%YCOLIDX%,%ZCOLIDX%
     )
   )
-)
-IF NOT "%EXTENT%"=="" (
-  SET MSG=EXTENT=%EXTENT%
-  ECHO     !MSG!
-  ECHO !MSG! >> %LOGFILE%
-  SET EXTENTOPTION=/e:%EXTENT%
 )
 IF NOT "%GENFILE%"=="" (
   SET MSG=GENFILE=%GENFILE%
@@ -174,8 +165,8 @@ IF DEFINED TS_PERIOD_SDATE (
   IF DEFINED TS_PERIOD_VALCOLIDX SET TSPOPTION=!TSPOPTION!,%TS_PERIOD_VALCOLIDX%
 )
 
-ECHO "%TOOLSPATH%\IPFselect.exe" %MOPTION% %XYZOPTION% %REGEXPOPTION% %EXPOPTION% %GENFILEOPTION% %LEVELOPTION% %EXTENTOPTION% %CHANGEOPTION% %TSSOPTION% %TSPOPTION% %TSEOPTION% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" >> %LOGFILE%
-"%TOOLSPATH%\IPFselect.exe" %MOPTION% %XYZOPTION% %REGEXPOPTION% %EXPOPTION% %GENFILEOPTION% %LEVELOPTION% %EXTENTOPTION% %CHANGEOPTION% %TSSOPTION% %TSPOPTION% %TSEOPTION% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" >> %LOGFILE%
+ECHO "%TOOLSPATH%\IPFselect.exe" %MOPTION% %XYZOPTION% %REGEXPOPTION% %EXPOPTION% %GENFILEOPTION% %LEVELOPTION% %CHANGEOPTION% %TSSOPTION% %TSPOPTION% %TSEOPTION% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" >> %LOGFILE%
+"%TOOLSPATH%\IPFselect.exe" %MOPTION% %XYZOPTION% %REGEXPOPTION% %EXPOPTION% %GENFILEOPTION% %LEVELOPTION% %CHANGEOPTION% %TSSOPTION% %TSPOPTION% %TSEOPTION% "%IPFPATH%" "%IPFFILTER%" "%RESULTPATH%" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 
 ECHO: 
