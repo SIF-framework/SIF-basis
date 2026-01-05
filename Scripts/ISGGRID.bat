@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Converts ISG-file to IDF-files with  *
 REM *   iMOD-batchfunction ISGGRID.          *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.0                         *
+REM * VERSION: 2.0.1                         *
 REM * MODIFICATIONS                          *
 REM *   2017-05-16 Initial version           *
 REM ******************************************
@@ -91,7 +91,7 @@ FOR %%G IN (%ISGFILES%) DO (
   ECHO OUTPUTFOLDER="%RESULTPATH%" >> %INIFILENAME%
   ECHO POSTFIX=%POSTFIX% >> %INIFILENAME%
   ECHO NODATA=%NODATA% >> %INIFILENAME%
-  ECHO ICDIST=0 >> %INIFILENAME%
+  ECHO ICDIST=1 >> %INIFILENAME%
   IF NOT "%WINDOW%"=="" (
     ECHO WINDOW=%WINDOW% >> %INIFILENAME%   
   )
