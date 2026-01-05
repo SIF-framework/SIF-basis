@@ -6,7 +6,7 @@ REM * IPFmerge.bat                           *
 REM * DESCRIPTION                            * 
 REM *   Merges points of IPF-files           *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.1.0                         *
+REM * VERSION: 2.1.1                         *
 REM * MODIFICATIONS                          *
 REM *   2018-09-01 Initial version           *
 REM ******************************************
@@ -33,7 +33,8 @@ REM * Derived variables *
 REM *********************
 SET SCRIPTNAME=%~n0
 SET THISPATH=%~dp0
-SET LOGFILE="%THISPATH%%SCRIPTNAME%.log"
+SET THISPATH=%THISPATH:~0,-1%
+SET LOGFILE="%THISPATH%\%SCRIPTNAME%.log"
 REM TEMPPATH: Relative path to temporary folder that can be emptied before and afterwards
 SET TEMPPATH=tmp-merge
 
@@ -82,8 +83,8 @@ IF ERRORLEVEL 1 GOTO error
 REM Copy first set of input files: use iMODclip to copy timeseries as well
 ECHO   copying input files from IPF-path1: !IPFPATH1:%ROOTPATH%\=!\%IPFFILES1% ... 
 ECHO   copying input files from IPF-path1: %IPFPATH1%\%IPFFILES1% ... >> %LOGFILE%
-ECHO CD "%IPFPATH1%" >> %LOGFILE%
-CD "%IPFPATH1%"
+ECHO CD /D "%IPFPATH1%" >> %LOGFILE%
+CD /D "%IPFPATH1%"
 FOR %%G IN (%IPFFILES1%) DO (
   SET IPFFILENAME=%%~nxG
   IF NOT EXIST "%%G" (
@@ -95,12 +96,16 @@ FOR %%G IN (%IPFFILES1%) DO (
   "%TOOLSPATH%\iMODclip.exe" "%%G" "%THISPATH%%TEMPPATH%\01-%%G" >> %LOGFILE%
   IF ERRORLEVEL 1 GOTO error
 )
+ECHO CD /D "%THISPATH%" >> %LOGFILE%
+CD /D "%THISPATH%" >> %LOGFILE%
 
 REM Copy optional second set of input files
 IF NOT "%IPFPATH2%" == "" (
   ECHO   copying input files from IPF-path2: !IPFPATH2:%ROOTPATH%\=!\%IPFFILES2% ... 
   ECHO   copying input files from IPF-path2: %IPFPATH2%\%IPFFILES2% ... >> %LOGFILE%
-  CD "%THISPATH%%IPFPATH2%"
+  ECHO CD /D "%IPFPATH2%" >> %LOGFILE%
+  CD /D "%IPFPATH2%" >> %LOGFILE%
+  SET FULLIPFPATH2=%CD%
   FOR %%G IN (%IPFFILES2%) DO (
     SET IPFFILENAME=%%~nxG
     IF NOT EXIST "%%G" (
