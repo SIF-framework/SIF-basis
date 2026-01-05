@@ -7,7 +7,7 @@ REM * DESCRIPTION                            *
 REM *   Calculates GxG from transient head   *
 REM *   IDF-files with iMOD-batchfunction.   *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.0.3                         *
 REM * MODIFICATIONS                          *
 REM *   2018-05-01 Initial version           *
 REM ******************************************
@@ -24,7 +24,7 @@ REM SURFACEIDF:  Path with filename of IDF-file to be used for the surface level
 REM *YEAR:       Specify start and end year (yyyy) for which IDF-files are used
 REM STARTMONTH:  Start month from the which the hydrological year starts, default is 4.
 REM ISEL:        Code for the area to be processed: ISEL=1 will compute the entire region; ISEL=2 will compute within given polygons; ISEL=3 will compute for those cells in the given IDF-file that are not equal to the NoDataValue of that IDF-file.
-REM GENFNAME:    Path with GEN-filename for polygon(s) for which mean values need to be computed. This keyword is obliged whenever ISEL=2.
+REM GENNAME:     Path with GEN-filename for polygon(s) for which mean values need to be computed. This keyword is obliged whenever ISEL=2.
 REM IDFNAME:     Path with IDF-filename for which mean values will be computed for those cells in the IDF-file that are not equal to the NoDataValue of that IDF-file. This keyword is compulsory whenever ISEL=3
 REM HGLG3:       Indicates whether or not the HG3 and LG3 also need to be written as output per year
 REM IMODEXE:     Path and filename of iMOD-executable to use. Note: until at least iMOD 5.5, the GVG is calculated with a formula based on the GHG/GVG and a different formula is used when SURFACEIDF is used.
@@ -38,7 +38,7 @@ SET SYEAR=1997
 SET EYEAR=2011
 SET STARTMONTH=4
 SET ISEL=1
-SET GENFNAME= 
+SET GENNAME= 
 SET IDFNAME=
 SET HGLG3=0
 SET IMODEXE=%IMODEXE%
@@ -112,13 +112,13 @@ ECHO FUNCTION=GXG > %INIFILE%
 ECHO ILAYER=%ILAYER% >> %INIFILE%
 ECHO NDIR=1 >> %INIFILE%
 ECHO SOURCEDIR1=%IDFPATH%\%IDFPREFIX% >> %INIFILE%
-ECHO SURFACEIDF=%SURFACEIDF% >> %INIFILE%
+IF DEFINED SURFACEIDF ECHO SURFACEIDF=%SURFACEIDF% >> %INIFILE%
 ECHO SYEAR=%SYEAR% >> %INIFILE%
 ECHO EYEAR=%EYEAR% >> %INIFILE%
 ECHO STARTMONTH=%STARTMONTH% >> %INIFILE%
 ECHO ISEL=%ISEL% >> %INIFILE%
 IF "%ISEL%"=="2" (
-  ECHO GENFNAME=%GENFNAME% >> %INIFILE%
+  ECHO GENFILE=%GENNAME% >> %INIFILE%
 )
 IF "%ISEL%"=="3" (
   ECHO IDFNAME=%IDFNAME% >> %INIFILE%
@@ -126,17 +126,10 @@ IF "%ISEL%"=="3" (
 IF NOT "%HGLG3%" == "" (
   ECHO HGLG3=%HGLG3% >> %INIFILE%
 )
+ECHO OUTPUTFOLDER1=%RESULTPATH% >> %INIFILE%
 
 ECHO "%IMODEXE%" %INIFILE% >> %LOGFILE%
 "%IMODEXE%" %INIFILE% >> %LOGFILE%
-
-SET MSG=Copying results ...
-ECHO %MSG%
-ECHO %MSG% >> %LOGFILE%
-COPY "%IDFPATH%\G?G_*.IDF" "%RESULTPATH%" >> %LOGFILE%
-IF ERRORLEVEL 1 GOTO error
-COPY "%IDFPATH%\GT_*.IDF" "%RESULTPATH%" >> %LOGFILE%
-IF ERRORLEVEL 1 GOTO error
 IF NOT EXIST "%RESULTPATH%\*.IDF" GOTO error
 IF EXIST %INIFILE% DEL %INIFILE%
 
