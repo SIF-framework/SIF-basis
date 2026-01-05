@@ -7,7 +7,7 @@ REM * DESCRIPTION                                 *
 REM *   Calculates statistics for IDF/IPF-file(s) *
 REM *   and specified values                      *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)        *
-REM * VERSION: 2.1.0                              *
+REM * VERSION: 2.2.0                              *
 REM * MODIFICATIONS                               *
 REM *   2017-08-20 Initial version                *
 REM ***********************************************
@@ -27,6 +27,7 @@ REM IPFIDCOLNR:     Column name or number (one-based) of column in source IPF-fi
 REM IPFSELCOLNRS:   Comma-seperated list with column names or numbers of other columns that should be copied to the resulting IPF-file when timeseries statistics are calculated (via TS* options)
 REM TSVALCOLNR:     Column number (one-based) v1 of column in associated file(s) to create TS-statistics for (default: 1)
 REM TSRESCOLNR:     Column number (one-based) v2 of column in associated file(s) to use for creating TS-residuals (v2-v1)
+REM TSRESMETHOD:    Specify method for TS-residuals : 1) calculate residual between each timestamp of v2-v1 and calculate statistics over resulting residuals; 2) calculate average and defined percentiles over timestamps of v1 and v2 and calculate difference
 REM TSPERIODSTART:  Start date (dd-mm-yyyy or ddmmyyyy) of period to select IPF TS-values for; note: TSPERIODSTART and/or TSPERIODEND can be empty
 REM TSPERIODEND:    End date (dd-mm-yyyy or ddmmyyyy) of period to select IPF TS-values for; note: TSPERIODSTART and/or TSPERIODEND can be empty
 REM DECIMALCOUNT:   Numbser of decimals that floating point values should be rounded to, or leave empty not to round
@@ -43,6 +44,7 @@ SET IPFIDCOLNR=
 SET IPFSELCOLNRS=
 SET TSVALCOLNR=
 SET TSRESCOLNR=
+SET TSRESMETHOD=
 SET TSPERIODSTART=
 SET TSPERIODEND=
 SET DECIMALCOUNT=
@@ -100,7 +102,10 @@ IF DEFINED TSVALCOLNR (
   IF DEFINED IPFIDCOLNR SET TSCOPTION=!TSCOPTION!,%IPFIDCOLNR%
   IF DEFINED IPFSELCOLNRS SET TSCOPTION=!TSCOPTION!,%IPFSELCOLNRS%
 )
-IF DEFINED TSRESCOLNR SET TSROPTION=/tsr:%TSRESCOLNR%
+IF DEFINED TSRESCOLNR (
+  SET TSROPTION=/tsr:%TSRESCOLNR%
+  IF DEFINED TSRESMETHOD SET TSROPTION=!TSROPTION!,%TSRESMETHOD%
+)
 IF DEFINED PCTCLASSCOUNT SET TOPTION=/t:%PCTCLASSCOUNT%
 IF DEFINED DECIMALCOUNT SET DOPTION=/d:%DECIMALCOUNT%
 IF NOT "%TSPERIODSTART%%TSPERIODEND%"=="" SET TSPOPTION=/tsp:%TSPERIODSTART%,%TSPERIODEND%
