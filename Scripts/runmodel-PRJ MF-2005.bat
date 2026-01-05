@@ -166,8 +166,6 @@ IF NOT DEFINED RESULTPATH (
 
 SET NAMPATH=%RESULTPATH%
 SET NAMFILE=!PRJFILE:.PRJ=.NAM!
-SET MAINNAMPATH=%RESULTPATH%
-SET MAINNAMFILE=%NAMFILE%
 SET HEADPATH=%RESULTPATH%\HEAD
 SET HEADFILTER=HEAD*.IDF
 
@@ -289,9 +287,9 @@ IF "%ISPRJCONVERTED%"=="1" (
 
 IF NOT "%ISS%"=="1" (
   IF "%ISNAMFILERUN%"=="1" (
-    IF NOT EXIST "%MAINNAMPATH%\%MAINNAMFILE%" (
-      ECHO Main NAM-file not found: %MAINNAMPATH%\%MAINNAMFILE%
-      ECHO Main NAM-file not found: %MAINNAMPATH%\%MAINNAMFILE% >> %LOGFILE%
+    IF NOT EXIST "%NAMPATH%\%NAMFILE%" (
+      ECHO Main NAM-file not found: %NAMPATH%\%NAMFILE%
+      ECHO Main NAM-file not found: %NAMPATH%\%NAMFILE% >> %LOGFILE%
       GOTO error
     )
 
@@ -314,14 +312,14 @@ IF NOT "%ISS%"=="1" (
 
     REM Start modelrun
     ECHO   start running !PRJFILE:.PRJ=.NAM! ...
-    CD "%RESULTPATH%"
-    ECHO "%IMODFLOWEXE%" "%MAINNAMFILE%" >> %LOGFILE%
+    CD /D "%NAMPATH%"
+    ECHO "%IMODFLOWEXE%" "%NAMFILE%" >> %LOGFILE%
     IF EXIST "%TOOLSPATH%\Tee.exe" (
-      "%IMODFLOWEXE%" "%MAINNAMFILE%" | "%TOOLSPATH%\Tee.exe" /a %LOGFILE%
+      "%IMODFLOWEXE%" "%NAMFILE%" | "%TOOLSPATH%\Tee.exe" /a %LOGFILE%
     ) ELSE (
-      "%IMODFLOWEXE%" "%MAINNAMFILE%"
+      "%IMODFLOWEXE%" "%NAMFILE%"
     )
-    CD "%THISPATH%"
+    CD /D "%THISPATH%"
   
     REM Check that results were created
     IF NOT EXIST "%HEADPATH%\%HEADFILTER%" (
