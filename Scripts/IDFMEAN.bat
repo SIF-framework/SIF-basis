@@ -7,7 +7,7 @@ REM * DESCRIPTION                                *
 REM *   Calculates mean from transient IDF-files *
 REM *   with iMOD-batchfunction IDFMEAN.         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)       *
-REM * VERSION: 2.1.0                             *
+REM * VERSION: 2.1.1                             *
 REM * MODIFICATIONS                              *
 REM *   2020-03-30 Initial version               *
 REM **********************************************
@@ -30,7 +30,7 @@ REM EDATE:       End date (yyyymmdd) for which IDF-files are used (optional), e.
 REM IYEAR:       One or more (comma seperated) years (within SDATE and EDATE) to be used exclusively (optional), e.g. 2001,2003,2005
 REM PERIODS:     One or more (comma seperated) periods (ddmm-ddmm), e.g. PERIOD1=1503-3110 to express the period 15th of March until the 31th of October.
 REM ISEL:        Code for the area to be processed: ISEL=1 will compute the entire region; ISEL=2 will compute within given polygons; ISEL=3 will compute for those cells in the given IDF-file that are not equal to the NoDataValue of that IDF-file.
-REM GENFNAME:    Path with GEN-filename for polygon(s) for which mean values need to be computed. This keyword is obliged whenever ISEL=2.
+REM GENNAME:     Path with GEN-filename for polygon(s) for which mean values need to be computed. This keyword is obliged whenever ISEL=2.
 REM IDFNAME:     Path with IDF-filename for which mean values will be computed for those cells in the IDF-file that are not equal to the NoDataValue of that IDF-file. This keyword is compulsory whenever ISEL=3
 REM ISDELRESULT: Specify (with value 1) that all old results should be deleted (to recycle bin) from RESULTPATH 
 REM RESULTPATH:  Name of subdirectory where the scriptresults are stored; note a subdir [SDATE-year]-[EDATE-year] is always added automatically
@@ -45,7 +45,7 @@ SET EDATE=20051231
 SET IYEAR=
 SET PERIODS=0104-3009
 SET ISEL=1
-SET GENFNAME= 
+SET GENNAME= 
 SET IDFNAME=
 SET ISDELRESULT=0
 SET RESULTPATH=result
@@ -185,7 +185,7 @@ IF NOT "%PERIODS%"=="" (
 IF NOT "%ISEL%"=="" (
   ECHO ISEL=%ISEL% >> %INIFILE%
   IF "%ISEL%"=="2" (
-    ECHO GENFNAME=%GENFNAME% >> %INIFILE%
+    ECHO GENFILE=%GENNAME% >> %INIFILE%
   )
   IF "%ISEL%"=="3" (
     ECHO IDFNAME=%IDFNAME% >> %INIFILE%
