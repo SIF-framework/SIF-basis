@@ -2,12 +2,12 @@
 REM ******************************************
 REM * SIF-basis v2.1.0 (Sweco)               *
 REM *                                        *
-REM * raster2IDF.bat                         *
-REM * DESCRIPTION                            * 
-REM *   Adds ITB-levels to GeoTOP IDF-files  *
-REM *   and renames to shorter filename.     *
+REM * IDFvoxel.bat                           *
+REM * DESCRIPTION                            *
+REM *   Correction of voxel IDF-files or     *
+REM *   conversion from GeoTOP CSV-files.    *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)   *
-REM * VERSION: 2.0.1                         *
+REM * VERSION: 2.0.3                         *
 REM * MODIFICATIONS                          *
 REM *   2018-05-01 Initial version           *
 REM ******************************************
@@ -19,15 +19,15 @@ REM ********************
 REM SOURCEPATH:    Path to source GeoTOP IDF/CSV/zip-files. Note: format of IDF-filename should be 'xxxx_iii_llll_cm_[onder|boven]_nap.IDF'
 REM FILTER:        Filter for source IDF/CSV/zip-files (e.g. *.IDF). For CSV or ZIP-files use set CONVERTCSV=1
 REM RECURSIVE:     Specify with value 1 that all subdirectories of the SOURCEPATH should be searched for IDFFILTER-files to scale, or leave empty to process only the SOURCEPATH directory
-REM CONVERTCSV: Specify (with value 1) if voxel CSV-file(s) should be converted to voxel model(s) with IDF-files. CSV-files may be contained in zip-files.
+REM CONVERTCSV:    Specify (with value 1) if voxel CSV-file(s) should be converted to voxel model(s) with IDF-files. CSV-files may be contained in zip-files.
 REM CSV_CELLSIZE:  Cellsize of voxels when CONVERTCSV=1
 REM CSV_THICKNESS: Thickness (m) of voxels when CONVERTCSV=1
 REM CSV_COLNRS:    List of (comma-seperated) column numbers in CSV-files to convert to voxel models when CONVERTCSV=1. Use negative columnnumbers for Exp(val).
 REM                Default, both lithoklasse and stratigraphy values are converted
 REM CSV_ZONE:      An extent (xll,yll,xur,yur) or a GEN-file (path and filename) with zone to process when CONVERTCSV=1. This will result in a single, merged voxelmodel when multiple csv/zip-files have been specified.
-REM ISITPUPDATED:  Specify (with value 1) if ITP-levels for existing voxel IDF-files should be updated/set. The ITP-levels are defined per IDF-file as the TOP- and BOT-level of all voxels in the IDF-file.
+REM ISITBUPDATED:  Specify (with value 1) if ITB-levels for existing voxel IDF-files should be updated/set. The ITB-levels are defined per IDF-file as the TOP- and BOT-level of all voxels in the IDF-file.
 REM ISRENAMED:     Specify (with value 1) if existing IDF-filenames of a voxelmodel should be renamed to shorter filenames: xxxx_iii_[+|-]llll_NAP.IDF, with iii reordered (low index for high level)
-REM                This option only works in combination with option ISITPUPDATED, see description for that option.
+REM                This option only works in combination with option ISITBUPDATED, see description for that option.
 REM RESULTPATH:    Path of the subdirectory where scriptresults are stored. Note: RESULTPATH may be equal to SOURCEPATH, but existing files be overwritten/deleted permanently
 SET SOURCEPATH=F:\Projects\EXTERN\RDS_IBR3\Modellen\ModelTemplate-BASISDATA_NL\GeoTOP\CSV-files
 SET FILTER=*.zip
@@ -37,7 +37,7 @@ SET CSV_CELLSIZE=100
 SET CSV_THICKNESS=0.5
 SET CSV_COLNRS=4,5,6,7,8,15,16
 SET CSV_ZONE=input\Utrecht.GEN
-SET ISITPUPDATED=
+SET ISITBUPDATED=
 SET ISRENAMED=
 SET RESULTPATH=result
 
@@ -79,9 +79,9 @@ ECHO SOURCEPATH=%SOURCEPATH% >> %LOGFILE%
 
 SET RECURSIVEOPTION=
 SET CSVOPTION=
-SET ITPOPTION=
+SET ITBOPTION=
 IF "%RECURSIVE%"=="1" SET RECURSIVEOPTION=/r
-IF "%ITPOPTION%"=="1" SET ITPOPTION=/u
+IF "%ITBOPTION%"=="1" SET ITBOPTION=/u
 IF "%CONVERTCSV%"=="1" (
   SET CSVOPTION=/i:%CSV_CELLSIZE%,%CSV_THICKNESS%,%CSV_COLNRS%
   IF DEFINED CSV_ZONE SET CSVZONEOPTION=/z:"%CSV_ZONE%"
@@ -92,8 +92,8 @@ CD "%SOURCEPATH%"
 SET SOURCEPATHCORR=%CD%
 CD "%THISPATH%"
 
-ECHO "%TOOLSPATH%\IDFvoxel.exe" /o %ITPOPTION% /n %RECURSIVEOPTION% %CSVOPTION% %CSVZONEOPTION% "%SOURCEPATH%" "%FILTER%" "!RESULTPATH!" >> %LOGFILE%
-"%TOOLSPATH%\IDFvoxel.exe" /o %ITPOPTION% /n %RECURSIVEOPTION% %CSVOPTION% %CSVZONEOPTION% "%SOURCEPATH%" "%FILTER%" "!RESULTPATH!" >> %LOGFILE%
+ECHO "%TOOLSPATH%\IDFvoxel.exe" /o %ITBOPTION% /n %RECURSIVEOPTION% %CSVOPTION% %CSVZONEOPTION% "%SOURCEPATH%" "%FILTER%" "!RESULTPATH!" >> %LOGFILE%
+"%TOOLSPATH%\IDFvoxel.exe" /o %ITBOPTION% /n %RECURSIVEOPTION% %CSVOPTION% %CSVZONEOPTION% "%SOURCEPATH%" "%FILTER%" "!RESULTPATH!" >> %LOGFILE%
 IF ERRORLEVEL 1 GOTO error
 
 :success
