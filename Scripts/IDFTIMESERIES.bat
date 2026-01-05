@@ -7,7 +7,7 @@ REM * DESCRIPTION                              *
 REM *   Runs iMOD-batchfunction IDFTIMESERIE   *
 REM *   to retrieves timeseries from IDF-files *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)     *
-REM * VERSION: 2.0.1                           *
+REM * VERSION: 2.0.2                           *
 REM * MODIFICATIONS                            *
 REM *   2019-03-06 Initial version             *
 REM ********************************************
@@ -107,7 +107,7 @@ SET /A Nr1=Nr1-1
 REM Retrieve NoData-value of IDF-files when fix of IDFTIMESERIE-bug is requested.
 IF "%ISNODATABUGFIXED%"=="1" (
   IF NOT DEFINED NODATAFIXVALUE (
-    SET MSG=  Retrieving NoData-value in IDF-files for fixing IDFTIMESERIE-bug ...
+    SET MSG=Retrieving NoData-value in IDF-files for fixing IDFTIMESERIE-bug ...
     ECHO !MSG!
     ECHO !MSG! >> %LOGFILE%
   
@@ -117,9 +117,13 @@ IF "%ISNODATABUGFIXED%"=="1" (
   
     REM Retrieve NoData-value
     FOR /F "tokens=* delims=" %%a IN ('CALL "%TOOLSPATH%\IDFinfo.exe" /n "!IDFFILENAME!"') DO SET NODATAFIXVALUE=%%a
-    ECHO     using NoData-value of IDF-files: !NODATAFIXVALUE!
+    ECHO   using NoData-value of IDF-files: !NODATAFIXVALUE!
   )
 )
+
+REM Start matching specified IPF-files with corresponding HEAD-fils
+ECHO Processing HEAD-files with prefix '%IDFPREFIX%' in: %IDFPATH% ...
+ECHO Processing HEAD-files with prefix '%IDFPREFIX%' in: %IDFPATH% ... >> %LOGFILE%
 
 FOR %%G IN (%IPFPREFIXES%) DO (
   ECHO   Processing calibratieset %%G ...
