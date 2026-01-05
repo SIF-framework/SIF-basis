@@ -6,7 +6,7 @@ REM * ISDcreate.bat                           *
 REM * DESCRIPTION                             *
 REM *   Creates ISD-file for IMODPATH         *
 REM * AUTHOR(S): Koen van der Hauw (Sweco)    *
-REM * VERSION: 2.0.0                          *
+REM * VERSION: 2.0.1                          *
 REM * MODIFICATIONS                           *
 REM *   2018-08-27 Initial version            *
 REM *   2024-01-12 Cleanup, move to SIF-basis *
@@ -16,7 +16,7 @@ CALL :Initialization
 REM ********************
 REM * Script variables *
 REM ********************
-REM SRCPATH:    Path to source IPF- or GEN-file(s) 
+REM SRCPATH:    Path to directory with source IPF- or GEN-file(s) 
 REM SRCFILTER:  Filter (or filename) to source IPF- or GEN-file(s) with points/features that define zone for startpoints
 REM N1:         Shape number 1: an integer or float (english notation). For points: radius of circle around point, for polygons: distance X between points in the polygon, for lines: distance between points along the line
 REM N2:         Shape number 2: an integer or float (english notation). For points: dinstance between points on the circle, for polygons: distance Y between points in the polygon, for lines: not used, use any number e.g. 0 
